@@ -8,6 +8,7 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from ryu.lib import hub
 import htb
+import htb_2
 
 # Global variables
 queue_uplink = []  # In theory lists are thread-safe
@@ -81,7 +82,7 @@ class QoSManager(app_manager.RyuApp):
         src = eth.src
         dpid = datapath.id
 
-        self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
+        # self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
         """ End debug """
 
         if in_port == 1:
@@ -139,11 +140,11 @@ class QoSManager(app_manager.RyuApp):
                 if tbf.consume(0, msg_len):
                     datapath.send_msg(out_format)
                     consume_package = True
-            hub.sleep(0.001)  # a sleep greater than 0.001 does not work properly... a big delay is encountered
+            hub.sleep(0.0001)  # a sleep greater than 0.001 does not work properly... a big delay is encountered
 
     def _TBF_scheduler_downlink(self):
         # The limit is given by queue_frames,
-        tbf = htb.HTB([capacity], [rate], 1)
+        tbf = htb_2.HTB()
 
         msg_len = 0
         datapath = None
@@ -158,8 +159,9 @@ class QoSManager(app_manager.RyuApp):
                     consume_package = False
 
             if not consume_package:
-                if tbf.consume(0, msg_len):
+                if tbf.consume(msg_len):
                     datapath.send_msg(out_format)
                     consume_package = True
-            hub.sleep(0.001)  # a sleep greater than 0.001 does not work properly... a big delay is encountered
+            hub.sleep(0.0001)  # a sleep greater than 0.001 does not work properly... a big delay is encountered
+
 
