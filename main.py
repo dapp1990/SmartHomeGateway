@@ -9,12 +9,18 @@ from ryu.lib.packet import ether_types
 from ryu.lib import hub
 import htb
 import htb_2
+from Queue import Queue
+from threading import Thread
+import time
 
 # Global variables
-queue_uplink = []  # In theory lists are thread-safe
-queue_downlink = []  # In theory lists are thread-safe
+queue_uplink = Queue()
+queue_downlink = Queue()  # In theory lists are thread-safe
 # rate NOT: 2kbps because it takes 2000000 cycles to storage MTU
 # so a single packet with 1556 is delayed ~ 2 seconds
+
+time_checkpoint1 = time.time()
+time_checkpoint2 = time.time()
 
 rate = 300000  # bytes/second
 # 32 -> 49792 -> roughly 50000
@@ -27,8 +33,14 @@ class QoSManager(app_manager.RyuApp):
 
     def __init__(self, *args, **kwargs):
         super(QoSManager, self).__init__(*args, **kwargs)
-        self.uplink_thread = hub.spawn(self._TBF_scheduler_uplink)
-        self.downlink_thread = hub.spawn(self._TBF_scheduler_downlink)
+
+        t_1 = Thread(target=self._TBF_scheduler_uplink)
+        t_1.daemon = True
+        t_1.start()
+
+        t_2 = Thread(target=self._TBF_scheduler_downlink)
+        t_2.daemon = True
+        t_2.start()
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -82,7 +94,7 @@ class QoSManager(app_manager.RyuApp):
         src = eth.src
         dpid = datapath.id
 
-        # self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
+        self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
         """ End debug """
 
         if in_port == 1:
@@ -104,9 +116,9 @@ class QoSManager(app_manager.RyuApp):
 
         # Todo: Assign QoS to datapath
         if out_port == 4294967294:
-            queue_downlink.append((ev.msg.msg_len, datapath, out))
+            queue_downlink.put((ev.msg.msg_len, datapath, out))
         else:
-            queue_uplink.append((ev.msg.msg_len, datapath, out))
+            queue_uplink.put((ev.msg.msg_len, datapath, out))
 
             # todo: clear a class of scheduling methods, pass reference of this class to send back the packets
 
@@ -121,47 +133,43 @@ class QoSManager(app_manager.RyuApp):
     # todo: clean duplicate code
 
     def _TBF_scheduler_uplink(self):
-        # The limit is given by queue_frames,
-        tbf = htb.HTB([capacity], [rate], 1)
-
-        msg_len = 0
-        datapath = None
-        out_format = None
-        consume_package = True
-
-        self.logger.info("TBF scheduler: %s", msg_len)
+        self.logger.info("_TBF_scheduler_uplink")
         while True:
-            if queue_uplink:
-                if consume_package:
-                    msg_len, datapath, out_format = queue_uplink.pop()
-                    consume_package = False
+            msg_len, datapath, out_format = queue_downlink.get()
+            self.logger.info("Taking something")
+            # self.schedule_1(msg_len, datapath, out_format)
+            datapath.send_msg(out_format)
+            queue_downlink.task_done()
 
-            if not consume_package:
-                if tbf.consume(0, msg_len):
-                    datapath.send_msg(out_format)
-                    consume_package = True
-            hub.sleep(0.0001)  # a sleep greater than 0.001 does not work properly... a big delay is encountered
+    def schedule_1(self, msg_len, datapath, out_format):
+        global time_checkpoint1
+        now = time.time()
+        new_tokens = ((now - time_checkpoint1) * 1000000)  # rate here! #checkppoint
+        time_checkpoint1 = now  # checkppoint
+        missing_tokens = msg_len - new_tokens
+        if (missing_tokens > 0):
+            self.logger.info("waiting 1...")
+            time.sleep(missing_tokens / 1000000)  # rate here!
+        datapath.send_msg(out_format)
+
+    def schedule_2(self, msg_len, datapath, out_format):
+        global time_checkpoint2
+        now = time.time()
+        new_tokens = ((now - time_checkpoint2) * 1000000)  # rate here! #checkppoint
+        time_checkpoint2 = now  # checkppoint
+        missing_tokens = msg_len - new_tokens
+        if (missing_tokens > 0):
+            self.logger.info("waiting 2..")
+            time.sleep(missing_tokens / 1000000)  # rate here!
+        datapath.send_msg(out_format)
 
     def _TBF_scheduler_downlink(self):
-        # The limit is given by queue_frames,
-        tbf = htb_2.HTB()
-
-        msg_len = 0
-        datapath = None
-        out_format = None
-        consume_package = True
-
-        self.logger.info("TBF scheduler: %s", msg_len)
+        self.logger.info("_TBF_scheduler_downlink")
         while True:
-            if queue_downlink:
-                if consume_package:
-                    msg_len, datapath, out_format = queue_downlink.pop()
-                    consume_package = False
-
-            if not consume_package:
-                if tbf.consume(msg_len):
-                    datapath.send_msg(out_format)
-                    consume_package = True
-            hub.sleep(0.0001)  # a sleep greater than 0.001 does not work properly... a big delay is encountered
+            msg_len, datapath, out_format = queue_uplink.get()
+            self.logger.info("Taking somethingfrom _TBF_scheduler_downlink")
+            # self.schedule_2(msg_len, datapath, out_format)
+            datapath.send_msg(out_format)
+            queue_uplink.task_done()
 
 
