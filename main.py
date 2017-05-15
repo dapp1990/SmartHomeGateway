@@ -33,14 +33,20 @@ class QoSManager(app_manager.RyuApp):
 
     def __init__(self, *args, **kwargs):
         super(QoSManager, self).__init__(*args, **kwargs)
+        """
+        for i in range(20):
+            t_1 = Thread(target=self._TBF_scheduler_uplink, args=(queue_uplink,))
+            #passing arguments didn't work !!!!
+            #t_1 = Thread(target=self._TBF_scheduler_uplink)
+            t_1.daemon = True
+            t_1.start()
 
-        t_1 = Thread(target=self._TBF_scheduler_uplink)
-        t_1.daemon = True
-        t_1.start()
-
-        t_2 = Thread(target=self._TBF_scheduler_downlink)
-        t_2.daemon = True
-        t_2.start()
+            t_2 = Thread(target=self._TBF_scheduler_downlink, args=(queue_downlink,))
+            #passing arguments didn't work !!!!
+            #t_2 = Thread(target=self._TBF_scheduler_downlink)
+            t_2.daemon = True
+            t_2.start()
+        """
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -114,6 +120,9 @@ class QoSManager(app_manager.RyuApp):
         out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id, in_port=in_port, actions=actions,
                                   data=data)
 
+        datapath.send_msg(out)
+        return
+
         # Todo: Assign QoS to datapath
         if out_port == 4294967294:
             queue_downlink.put((ev.msg.msg_len, datapath, out))
@@ -132,14 +141,14 @@ class QoSManager(app_manager.RyuApp):
 
     # todo: clean duplicate code
 
-    def _TBF_scheduler_uplink(self):
-        self.logger.info("_TBF_scheduler_uplink")
+    def _TBF_scheduler_uplink(self, q):
+        self.logger.info("queue_downlink")
         while True:
-            msg_len, datapath, out_format = queue_downlink.get()
-            self.logger.info("Taking something")
+            msg_len, datapath, out_format = q.get()
+            self.logger.info("Taking from _TBF_scheduler_uplink")
             # self.schedule_1(msg_len, datapath, out_format)
             datapath.send_msg(out_format)
-            queue_downlink.task_done()
+            q.task_done()
 
     def schedule_1(self, msg_len, datapath, out_format):
         global time_checkpoint1
@@ -163,13 +172,13 @@ class QoSManager(app_manager.RyuApp):
             time.sleep(missing_tokens / 1000000)  # rate here!
         datapath.send_msg(out_format)
 
-    def _TBF_scheduler_downlink(self):
+    def _TBF_scheduler_downlink(self, q):
         self.logger.info("_TBF_scheduler_downlink")
         while True:
-            msg_len, datapath, out_format = queue_uplink.get()
-            self.logger.info("Taking somethingfrom _TBF_scheduler_downlink")
+            msg_len, datapath, out_format = q.get()
+            self.logger.info("Taking from _TBF_scheduler_downlink")
             # self.schedule_2(msg_len, datapath, out_format)
             datapath.send_msg(out_format)
-            queue_uplink.task_done()
+            q.task_done()
 
 
