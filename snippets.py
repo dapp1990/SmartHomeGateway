@@ -15,3 +15,8 @@ def flow_stats_reply_handler(self, ev):
                       stat.cookie, stat.packet_count, stat.byte_count,
                       stat.match, stat.instructions))
     self.logger.debug('FlowStats: %s', flows)
+
+
+@application.route('/img/<variable>')
+def root(variable):
+    return 'I am returning the same variable {}'.format(variable)
