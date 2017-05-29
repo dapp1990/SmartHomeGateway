@@ -22,10 +22,10 @@ queue_downlink = Queue()  # In theory lists are thread-safe
 time_checkpoint1 = time.time()
 time_checkpoint2 = time.time()
 
-rate = 300000  # bytes/second
+rate = 100000  # bytes/second
 # 32 -> 49792 -> roughly 50000
 # 1 -> busrt == MTU -> no burst
-capacity = 66
+capacity = 1
 
 local_port = 2#4294967294
 
@@ -35,6 +35,19 @@ class QoSManager(app_manager.RyuApp):
 
     def __init__(self, *args, **kwargs):
         super(QoSManager, self).__init__(*args, **kwargs)
+
+        t_1 = Thread(target=self._TBF_scheduler_uplink, args=(queue_uplink,))
+        # passing arguments didn't work !!!!
+        # t_1 = Thread(target=self._TBF_scheduler_uplink)
+        t_1.daemon = True
+        t_1.start()
+
+        t_2 = Thread(target=self._TBF_scheduler_downlink, args=(queue_downlink,))
+        # passing arguments didn't work !!!!
+        # t_2 = Thread(target=self._TBF_scheduler_downlink)
+        t_2.daemon = True
+        t_2.start()
+
         """
         for i in range(20):
             t_1 = Thread(target=self._TBF_scheduler_uplink, args=(queue_uplink,))
@@ -52,7 +65,7 @@ class QoSManager(app_manager.RyuApp):
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
-        self.logger.info("table-miss configuration")
+        self.logger.info("table-miss configuration %s %s",rate, capacity)
         datapath = ev.msg.datapath
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
@@ -119,59 +132,47 @@ class QoSManager(app_manager.RyuApp):
         # Create the out paket format to be sent
         data = msg.data  # problably not useful
         actions = [parser.OFPActionOutput(out_port)]
-        out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id, in_port=in_port, actions=actions,
+        out_format = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id, in_port=in_port, actions=actions,
                                   data=data)
 
-        datapath.send_msg(out)
-        return
-
-        # Todo: Assign QoS to datapath
-        if out_port == local_port:
-            queue_downlink.put((ev.msg.msg_len, datapath, out))
+        if out_port == 1:
+            queue_downlink.put((ev.msg.total_len, datapath, out_format))
         else:
-            queue_uplink.put((ev.msg.msg_len, datapath, out))
-
-            # todo: clear a class of scheduling methods, pass reference of this class to send back the packets
-
-    def _fifo_scheduler(self):
-        while True:
-            if queue_frames:
-                msg_len, datapath, out_format = queue_frames.pop()
-                datapath.send_msg(out_format)
-            # Delay
-            hub.sleep(0.001)
+            queue_uplink.put((ev.msg.total_len, datapath, out_format))
+        #datapath.send_msg(out)
+        return
 
     # todo: clean duplicate code
 
     def _TBF_scheduler_uplink(self, q):
-        self.logger.info("queue_downlink")
+        self.logger.info("_TBF_scheduler_uplink")
         while True:
             msg_len, datapath, out_format = q.get()
             self.logger.info("Taking from _TBF_scheduler_uplink")
-            # self.schedule_1(msg_len, datapath, out_format)
-            datapath.send_msg(out_format)
+            self.schedule_1(msg_len, datapath, out_format)
+            #datapath.send_msg(out_format)
             q.task_done()
 
     def schedule_1(self, msg_len, datapath, out_format):
         global time_checkpoint1
         now = time.time()
-        new_tokens = ((now - time_checkpoint1) * 1000000)  # rate here! #checkppoint
+        new_tokens = ((now - time_checkpoint1) * rate)  # rate here! #checkppoint
         time_checkpoint1 = now  # checkppoint
         missing_tokens = msg_len - new_tokens
         if (missing_tokens > 0):
             self.logger.info("waiting 1...")
-            time.sleep(missing_tokens / 1000000)  # rate here!
+            time.sleep(missing_tokens / rate)  # rate here!
         datapath.send_msg(out_format)
 
     def schedule_2(self, msg_len, datapath, out_format):
         global time_checkpoint2
         now = time.time()
-        new_tokens = ((now - time_checkpoint2) * 1000000)  # rate here! #checkppoint
+        new_tokens = ((now - time_checkpoint2) * rate)  # rate here! #checkppoint
         time_checkpoint2 = now  # checkppoint
         missing_tokens = msg_len - new_tokens
         if (missing_tokens > 0):
             self.logger.info("waiting 2..")
-            time.sleep(missing_tokens / 1000000)  # rate here!
+            time.sleep(missing_tokens / rate)  # rate here!
         datapath.send_msg(out_format)
 
     def _TBF_scheduler_downlink(self, q):
@@ -179,7 +180,7 @@ class QoSManager(app_manager.RyuApp):
         while True:
             msg_len, datapath, out_format = q.get()
             self.logger.info("Taking from _TBF_scheduler_downlink")
-            # self.schedule_2(msg_len, datapath, out_format)
+            #self.schedule_2(msg_len, datapath, out_format)
             datapath.send_msg(out_format)
             q.task_done()
 
