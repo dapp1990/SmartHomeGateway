@@ -48,21 +48,6 @@ class QoSManager(app_manager.RyuApp):
         t_2.daemon = True
         t_2.start()
 
-        """
-        for i in range(20):
-            t_1 = Thread(target=self._TBF_scheduler_uplink, args=(queue_uplink,))
-            #passing arguments didn't work !!!!
-            #t_1 = Thread(target=self._TBF_scheduler_uplink)
-            t_1.daemon = True
-            t_1.start()
-
-            t_2 = Thread(target=self._TBF_scheduler_downlink, args=(queue_downlink,))
-            #passing arguments didn't work !!!!
-            #t_2 = Thread(target=self._TBF_scheduler_downlink)
-            t_2.daemon = True
-            t_2.start()
-        """
-
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
         self.logger.info("table-miss configuration %s %s",rate, capacity)
