@@ -1,12 +1,12 @@
 from flask import Flask, request
 import time
 from interface_manager import InterfaceStatistics
-from simple_statistics_manager import SimpleStatisticsStatistics
+from simple_statistics_manager import SimpleStatisticsManager
 from threading import Thread
 
 application = Flask(__name__)
 
-statistics_manager = SimpleStatisticsStatistics()
+statistics_manager = SimpleStatisticsManager()
 
 if not isinstance(statistics_manager, InterfaceStatistics):
     raise Exception("{} must be an instance of {}".format(statistics_manager.__class__, InterfaceStatistics.__class__))

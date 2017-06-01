@@ -3,7 +3,7 @@ import shelve
 from uuid import uuid4
 
 
-class SimpleStatisticsStatistics(InterfaceStatistics):
+class SimpleStatisticsManager(InterfaceStatistics):
     """Naive statistics manager to store and retrieve OVS statistics
     """
 
