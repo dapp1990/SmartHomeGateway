@@ -12,12 +12,11 @@ class SimplePolicyManager(InterfacePolicy):
 
     """
 
-    RESERVED_BYTES = (150+16) * 10
-
-    def __init__(self, max_capacity):
+    def __init__(self, max_capacity, reserved_bytes):
         self.flows = dict()
         self.requests = []
-        self.max_capacity = max_capacity - self.RESERVED_BYTES
+        self.max_capacity = max_capacity - reserved_bytes
+        self.reserved_bytes = reserved_bytes
         self.current_capacity = 0
 
     def add_flow(self, flow_id):
@@ -26,8 +25,8 @@ class SimplePolicyManager(InterfacePolicy):
         Args:
             flow_id (str): id of the flow to monitor
         """
-        self.flows[flow_id] = self.RESERVED_BYTES
-        self.current_capacity += self.RESERVED_BYTES
+        self.flows[flow_id] = self.reserved_bytes
+        self.current_capacity += self.reserved_bytes
 
         # Todo: send response to flow manager
 
@@ -86,7 +85,7 @@ class SimplePolicyManager(InterfacePolicy):
             # Smooth dataset using Savitzky-Golay filter to avoid peak in the bandwidth estimation
             measurements_hat = util.savitzky_golay(np.array(measurements), 51, 3)
             new_bandwidth = sum(measurements_hat)/len(measurements_hat)
-            if new_bandwidth < self.RESERVED_BYTES:
+            if new_bandwidth < self.reserved_bytes:
                 self.current_capacity -= self.flows[id_flow]
                 self.flows[id_flow] = 0
             elif new_bandwidth < self.flows[id_flow]:
@@ -94,18 +93,12 @@ class SimplePolicyManager(InterfacePolicy):
                 self.flows[id_flow] = new_bandwidth
                 self.current_capacity += new_bandwidth
 
-        print (self.current_capacity)
-
         new_bandwidth = min([self.max_capacity - self.current_capacity, self.flows[flow_id]])
         new_bandwidth += self.flows[flow_id]
 
         self.current_capacity -= self.flows[flow_id]
         self.flows[flow_id] = new_bandwidth
         self.current_capacity += new_bandwidth
-
-        print (self.current_capacity)
-
-
 
     def statistics_request(self, flow_id, max_stat):
         """Abstract method to be implemented by the concrete PolicyManager class.
@@ -134,7 +127,8 @@ class SimplePolicyManager(InterfacePolicy):
         if self.max_capacity - self.current_capacity < total_bandwidth:
             raise AttributeError("Bandwidth exceeds current capacity")
 
-        self.flows[flow_id] = total_bandwidth
+        self.flows[flow_id] = bandwidth
+        self.current_capacity += total_bandwidth
 
         # todo notify to flow manager
 

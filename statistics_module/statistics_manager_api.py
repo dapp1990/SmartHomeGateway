@@ -1,5 +1,4 @@
 from flask import Flask, request
-from flask_restful import Resource,Api
 import time
 from interface_manager import InterfaceStatistics
 from simple_statistics_manager import SimpleStatisticsStatistics
@@ -11,7 +10,6 @@ statistics_manager = SimpleStatisticsStatistics()
 
 if not isinstance(statistics_manager, InterfaceStatistics):
     raise Exception("{} must be an instance of {}".format(statistics_manager.__class__, InterfaceStatistics.__class__))
-
 
 def parse_request():
     # TODO: parse come request here

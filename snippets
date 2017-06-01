@@ -16,7 +16,13 @@ def flow_stats_reply_handler(self, ev):
                       stat.match, stat.instructions))
     self.logger.debug('FlowStats: %s', flows)
 
+-----------------
 
 @application.route('/img/<variable>')
 def root(variable):
     return 'I am returning the same variable {}'.format(variable)
+
+-----------------
+
+with self.assertRaises(AttributeError):
+    simple_policy_manager.set_bandwidth(0, 1000000)
