@@ -4,39 +4,54 @@ from interface_manager import InterfaceStatistics
 from simple_statistics_manager import SimpleStatisticsManager
 from threading import Thread
 
-application = Flask(__name__)
 
-statistics_manager = SimpleStatisticsManager()
+class StatisticsApi:
 
-if not isinstance(statistics_manager, InterfaceStatistics):
-    raise Exception("{} must be an instance of {}".format(statistics_manager.__class__, InterfaceStatistics.__class__))
+    app = Flask(__name__)
 
-def parse_request():
-    # TODO: parse come request here
-    w = request.args.get('w')
-    if not w: w = 400
-    else: w = int(w)
+    def __init__(self,statistics_manager):
 
-    return "one", "two", "three"
+        if not isinstance(statistics_manager, InterfaceStatistics):
+            raise Exception("{} must be an instance of {}".format(statistics_manager.__class__,
+                                                                  InterfaceStatistics.__class__))
 
-def simple_test():
-    start = time.clock()
-    test = statistics_manager.save_statistics("something here!")
-    end = time.clock() - start
-    print ("It took {}".format(end))
-    return test
+        self.statistics_manager = statistics_manager
 
+    def parse_request(self):
+        # TODO: parse come request here
+        w = request.args.get('w')
+        if not w: w = 400
+        else: w = int(w)
 
-@application.route('/')
-def root():
-    thread = Thread(target = simple_test, args=()) #args=(*parse_request())
-    thread.daemon = True
-    thread.start()
-    return 'It was saved'
-    # return 'The result is {}'.format(simple_test())
-    # return '{} {} {}'.format(*parse_request())
+        return "one", "two", "three"
 
+    #@app.get_send_file_max_age()
+    def simple_test(self):
+        start = time.clock()
+        test = self.statistics_manager.save_statistics()
+        end = time.clock() - start
+        print ("It took {}".format(end))
+        return test
+
+    @app.route('/save_statistics/')
+    def root(self):
+        thread = Thread(target=self.statistics_manager, args=()) #args=(*parse_request())
+        thread.daemon = True
+        thread.start()
+        return 'It was saved'
+        # return 'The result is {}'.format(simple_test())
+        # return '{} {} {}'.format(*parse_request())
+
+    @staticmethod
+    @app.route('/')
+    def test():
+        return 'This is the testing response'
+
+    def run(self,port=5000,host='0.0.0.0',debug_mode=False):
+        self.app.debug = debug_mode
+        self.app.run(host=host, port=port)
 
 if __name__ == '__main__':
-    application.debug=True
-    application.run()
+
+    s_api = StatisticsApi(SimpleStatisticsManager('testing_database'))
+    s_api.run(port=5001,debug_mode=True)

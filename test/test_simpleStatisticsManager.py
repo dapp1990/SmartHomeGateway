@@ -32,7 +32,6 @@ class TestSimpleStatisticsManager(TestCase):
 
         self.assertEquals(3, len(results))
 
-
     def test_second_retrieve_case(self):
 
         for i in range(100):
@@ -42,7 +41,7 @@ class TestSimpleStatisticsManager(TestCase):
 
         self.assertEquals(50, len(results))
 
-    def test_second_retrieve_case(self):
+    def test_third_retrieve_case(self):
 
         for i in range(100):
             self.simple_manager.save_statistics(['192.168.19.20', '192.168.19.77', i, '1233445664'])
