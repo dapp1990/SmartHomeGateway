@@ -1,8 +1,9 @@
-from interface_manager import InterfaceManager
+from interface_manager import InterfaceStatistics
 import shelve
 from uuid import uuid4
 
-class SimpleStatisticsManager(InterfaceManager):
+
+class SimpleStatisticsStatistics(InterfaceStatistics):
     """Naive statistics manager to store and retrieve OVS statistics
     """
 

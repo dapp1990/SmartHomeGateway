@@ -1,7 +1,7 @@
 import abc
 
 
-class InterfaceManager(object):
+class InterfaceStatistics(object):
     """
     Interface for StatisticsManager classes
     """

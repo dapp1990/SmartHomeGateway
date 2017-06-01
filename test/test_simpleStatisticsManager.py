@@ -1,4 +1,4 @@
-from statistics_manager.simple_statistics_manager import SimpleStatisticsManager
+from statistics_module.simple_statistics_manager import SimpleStatisticsStatistics
 from unittest import TestCase
 import os
 
@@ -6,7 +6,7 @@ import os
 class TestSimpleStatisticsManager(TestCase):
 
     def setUp(self):
-        self.simple_manager = SimpleStatisticsManager('test_database')
+        self.simple_manager = SimpleStatisticsStatistics('test_database')
 
     def test_naive_retrieve_case(self):
 
