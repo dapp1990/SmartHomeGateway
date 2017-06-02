@@ -3,13 +3,15 @@ import time
 from interface_manager import InterfaceStatistics
 from simple_statistics_manager import SimpleStatisticsManager
 from threading import Thread
+import json
 
 
 class StatisticsApi:
 
     app = Flask(__name__)
+    statistics_manager = None
 
-    def __init__(self,statistics_manager):
+    def __init__(self, statistics_manager):
 
         if not isinstance(statistics_manager, InterfaceStatistics):
             raise Exception("{} must be an instance of {}".format(statistics_manager.__class__,
@@ -33,19 +35,20 @@ class StatisticsApi:
         print ("It took {}".format(end))
         return test
 
-    @app.route('/save_statistics/')
-    def root(self):
-        thread = Thread(target=self.statistics_manager, args=()) #args=(*parse_request())
+    @staticmethod
+    @app.route('/save_statistics', methods=['POST'])
+    def root():
+        data = request.get_json()
+        print data
+        thread = Thread(target=self.statistics_manager.save_statistics, args=()) #args=(*parse_request())
         thread.daemon = True
         thread.start()
-        return 'It was saved'
-        # return 'The result is {}'.format(simple_test())
-        # return '{} {} {}'.format(*parse_request())
+        return json.dumps({'msg': 'dummy_data'})
 
     @staticmethod
     @app.route('/')
     def test():
-        return 'This is the testing response'
+        return json.dumps({'msg': 'dummy_data'})
 
     def run(self,port=5000,host='0.0.0.0',debug_mode=False):
         self.app.debug = debug_mode
