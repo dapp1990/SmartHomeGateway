@@ -32,3 +32,5 @@ class SimpleStatisticsManager(InterfaceStatistics):
             return []
         else:
             return self.cache[flow_id][:max_stat]
+
+        # Todo: use API to send response!
