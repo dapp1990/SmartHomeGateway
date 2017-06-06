@@ -12,7 +12,8 @@ class InterfacePolicy(object):
 
     @abc.abstractmethod
     def add_flow(self, flow_id):
-        """Abstract method to be implemented by the concrete PolicyManager class.
+        """Abstract method to be implemented by the concrete PolicyManager
+        class.
 
         Args:
             flow_id (str): id of the flow to monitor
@@ -21,7 +22,8 @@ class InterfacePolicy(object):
 
     @abc.abstractmethod
     def statistics_request(self, flow_id, max_stat):
-        """Abstract method to be implemented by the concrete PolicyManager class.
+        """Abstract method to be implemented by the concrete PolicyManager
+        class.
 
         Args:
             flow_id (int): The number of the identifier to retrieve
@@ -34,7 +36,8 @@ class InterfacePolicy(object):
 
     @abc.abstractmethod
     def statistics_handler(self, flow_id, max_stat):
-        """Abstract method to be implemented by the concrete PolicyManager class.
+        """Abstract method to be implemented by the concrete PolicyManager
+        class.
 
         Args:
             flow_id (int): The number of the identifier to retrieve
@@ -47,7 +50,8 @@ class InterfacePolicy(object):
 
     @abc.abstractmethod
     def set_bandwidth(self):
-        """Abstract method to be implemented by the concrete PolicyManager class.
+        """Abstract method to be implemented by the concrete PolicyManager
+        class.
 
         Args:
             flow_id (int): The number of the identifier to retrieve
@@ -57,8 +61,10 @@ class InterfacePolicy(object):
 
     @abc.abstractmethod
     def remove_flow(self):
-        """Abstract method to be implemented by the concrete PolicyManager class.
+        """Abstract method to be implemented by the concrete PolicyManager
+        class.
 
         Return:
-            A string for the flow to be removed in the QoS table of the flow manager
+            A string for the flow to be removed in the QoS table of the flow
+            manager
         """

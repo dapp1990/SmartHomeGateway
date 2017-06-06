@@ -1,4 +1,4 @@
-from interface_manager import InterfaceStatistics
+from .interface_manager import InterfaceStatistics
 import shelve
 from uuid import uuid4
 
@@ -19,11 +19,13 @@ class SimpleStatisticsManager(InterfaceStatistics):
         key = str(uuid4)
         data_base[key] = statistics
 
-        # time is not taking into account, it was neglected due to the constantly update by the client
+        # time is not taking into account, it was neglected due to the
+        # constantly update by the client
         if flow_id not in self.cache:
             self.cache[flow_id] = [statistics[2]]
         else:
-            self.cache[flow_id] = [statistics[2]] + self.cache[flow_id][:self.max_cache-1]
+            self.cache[flow_id] = [statistics[2]]+\
+                                  self.cache[flow_id][:self.max_cache-1]
 
         return True
 
@@ -32,5 +34,3 @@ class SimpleStatisticsManager(InterfaceStatistics):
             return []
         else:
             return self.cache[flow_id][:max_stat]
-
-        # Todo: use API to send response!

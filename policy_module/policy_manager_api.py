@@ -1,7 +1,8 @@
 from flask import Flask, request
+from flask.ext.aiohttp import async
 import time
-from .interface_manager import InterfaceStatistics
-from .simple_statistics_manager import SimpleStatisticsManager
+from interface_policy_manager import InterfacePolicy
+from simple_policy_manager import SimplePolicyManager
 from threading import Thread
 import json
 from functools import partial
@@ -9,7 +10,6 @@ import requests
 
 
 registered_routes = {}
-
 
 def register_route(route=None, methods=['GET']):
     #simple decorator for class based views
@@ -21,7 +21,7 @@ def register_route(route=None, methods=['GET']):
 
 class StatisticsApi(Flask):
 
-    def __init__(self,statistics_manager, *args, **kwargs):
+    def __init__(self,policy_manager, *args, **kwargs):
         if not args:
             kwargs.setdefault('import_name', __name__)
         Flask.__init__(self, *args, **kwargs)
@@ -32,26 +32,15 @@ class StatisticsApi(Flask):
             partial_fn.__name__ = fn.__name__
             self.route(route, methods=ms)(partial_fn)
 
-        if not isinstance(statistics_manager, InterfaceStatistics):
+        if not isinstance(policy_manager, InterfacePolicy):
             raise Exception("{} must be an instance of {}".
-                            format(statistics_manager.__class__,
-                                   InterfaceStatistics.__class__))
+                            format(policy_manager.__class__,
+                                   InterfacePolicy.__class__))
 
-        self.statistics_manager = statistics_manager
+        self.policy_manager = policy_manager
 
-    @register_route("/get_statistics")
-    def get_statistics(self):
-        data = request.get_json()
-        parameters = data['flow_id'], data['max_length']
-        url_response = data['response']
-
-        thread = Thread(target=self.request_handler(2, url_response),
-                        args=parameters)
-        thread.daemon = True
-        thread.start()
-
-    @register_route("/save_statistics", methods=['POST'])
-    def save_statistics(self):
+    @register_route("/get_statistics", methods=['POST'])
+    def get_statistics(self, response):
 
         data = request.get_json()
         parameters = [data['src'], data['dst'], data['size'], data['time']]
@@ -69,8 +58,8 @@ class StatisticsApi(Flask):
     def request_handler(self, command, url_response):
         # Todo: change this switch/dictionary statement with a command pattern
         result = {
-            1: self.statistics_manager.save_statistics,
-            2: self.statistics_manager.get_statistics,
+            1: self.policy_manager.save_statistics,
+            2: self.policy_manager.get_statistics,
         }[command]
 
         data = json.dumps({'response': result})
@@ -78,9 +67,3 @@ class StatisticsApi(Flask):
         # Todo: No failure controller
         r = requests.post(url_response, data=data)
 
-
-if __name__ == '__main__':
-
-    s_api = StatisticsApi(SimpleStatisticsManager('testing_database'))
-    s_api.debug = True
-    s_api.run(port=5001)

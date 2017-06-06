@@ -4,7 +4,10 @@ from uuid import uuid4
 import numpy as np
 import util
 
-# Todo: add a wrapper that notifies immediately to the flow manager when there is an update
+# Todo: add a wrapper that notifies immediately to the flow manager when is
+# an update
+
+
 class SimplePolicyManager(InterfacePolicy):
     """Naive statistics manager to store and retrieve OVS statistics
 
