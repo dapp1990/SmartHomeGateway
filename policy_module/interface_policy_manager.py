@@ -21,34 +21,6 @@ class InterfacePolicy(object):
         pass
 
     @abc.abstractmethod
-    def statistics_request(self, flow_id, max_stat):
-        """Abstract method to be implemented by the concrete PolicyManager
-        class.
-
-        Args:
-            flow_id (int): The number of the identifier to retrieve
-            max_stat (int): Maximum number of list of statistics to retrieve
-
-        Return:
-            A list of list of stings with the requested statistics
-        """
-        pass
-
-    @abc.abstractmethod
-    def statistics_handler(self, flow_id, max_stat):
-        """Abstract method to be implemented by the concrete PolicyManager
-        class.
-
-        Args:
-            flow_id (int): The number of the identifier to retrieve
-            max_stat (int): Maximum number of list of statistics to retrieve
-
-        Return:
-            A list of list of stings with the requested statistics
-        """
-        pass
-
-    @abc.abstractmethod
     def set_bandwidth(self):
         """Abstract method to be implemented by the concrete PolicyManager
         class.
