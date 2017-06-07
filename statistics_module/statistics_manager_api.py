@@ -1,36 +1,21 @@
-from flask import Flask, request
-import time
-from .interface_manager import InterfaceStatistics
-from .simple_statistics_manager import SimpleStatisticsManager
+from statistics_module.interface_manager import InterfaceStatistics
+from statistics_module.simple_statistics_manager import SimpleStatisticsManager
 from threading import Thread
 import json
 from functools import partial
 import requests
 
+import asyncio
+from datetime import datetime
+from aiohttp import web
+import random
 
-registered_routes = {}
-
-
-def register_route(route=None, methods=['GET']):
-    #simple decorator for class based views
-    def inner(fn):
-        registered_routes[route] = (fn, methods)
-        return fn
-    return inner
+import async_timeout
 
 
-class StatisticsApi(Flask):
+class StatisticsApi:
 
-    def __init__(self,statistics_manager, *args, **kwargs):
-        if not args:
-            kwargs.setdefault('import_name', __name__)
-        Flask.__init__(self, *args, **kwargs)
-
-        # register the routes from the decorator
-        for route, (fn, ms) in registered_routes.items():
-            partial_fn = partial(fn, self)
-            partial_fn.__name__ = fn.__name__
-            self.route(route, methods=ms)(partial_fn)
+    def __init__(self,statistics_manager, port=5000):
 
         if not isinstance(statistics_manager, InterfaceStatistics):
             raise Exception("{} must be an instance of {}".
@@ -39,32 +24,33 @@ class StatisticsApi(Flask):
 
         self.statistics_manager = statistics_manager
 
-    @register_route("/get_statistics")
-    def get_statistics(self):
-        data = request.get_json()
-        parameters = data['flow_id'], data['max_length']
-        url_response = data['response']
+        app = web.Application()
+        app.router.add_get('/', self.root)
+        app.router.add_post('/save_statistics', self.save_statistics)
+        app.router.add_post('/get_statistics', self.get_statistics)
+        web.run_app(app, port=port)
 
-        thread = Thread(target=self.request_handler(2, url_response),
-                        args=parameters)
-        thread.daemon = True
-        thread.start()
+    async def get_statistics(self, request):
+        data = await request.json()
 
-    @register_route("/save_statistics", methods=['POST'])
-    def save_statistics(self):
+        result = self.statistics_manager.get_statistics(data['flow_id'],
+                                                        int(data['max_length']))
 
-        data = request.get_json()
+        return web.json_response(result)
+
+    async def save_statistics(self, request):
+
+        data = await request.json()
         parameters = [data['src'], data['dst'], data['size'], data['time']]
-        url_response = data['response']
 
-        thread = Thread(target=self.request_handler(1, url_response),
-                        args=[parameters])
-        thread.daemon = True
-        thread.start()
+        result = self.statistics_manager.save_statistics(parameters)
 
-    @register_route("/")
-    def root(self):
-        return json.dumps({'response': 'dummy_data'})
+        return web.json_response({'response': result})
+
+
+    async def root(self, request):
+        print(request)
+        return web.json_response({'response': 'dummy_data'})
 
     def request_handler(self, command, url_response):
         # Todo: change this switch/dictionary statement with a command pattern
@@ -78,9 +64,18 @@ class StatisticsApi(Flask):
         # Todo: No failure controller
         r = requests.post(url_response, data=data)
 
+    def run(self, command, url_response):
+        # Todo: change this switch/dictionary statement with a command pattern
+        result = {
+            1: self.statistics_manager.save_statistics,
+            2: self.statistics_manager.get_statistics,
+        }[command]
+
+        data = json.dumps({'response': result})
+
+        # Todo: No failure controller
+        r = requests.post(url_response, data=data)
 
 if __name__ == '__main__':
-
-    s_api = StatisticsApi(SimpleStatisticsManager('testing_database'))
-    s_api.debug = True
-    s_api.run(port=5001)
+    tes = StatisticsApi(SimpleStatisticsManager("test_db"), 5001)
+    #pass
