@@ -1,21 +1,13 @@
 from statistics_module.interface_manager import InterfaceStatistics
 from statistics_module.simple_statistics_manager import SimpleStatisticsManager
-from threading import Thread
-import json
-from functools import partial
-import requests
-
-import asyncio
-from datetime import datetime
 from aiohttp import web
+import asyncio
 import random
-
-import async_timeout
 
 
 class StatisticsApi:
 
-    def __init__(self,statistics_manager, port=5000):
+    def __init__(self,statistics_manager):
 
         if not isinstance(statistics_manager, InterfaceStatistics):
             raise Exception("{} must be an instance of {}".
@@ -24,11 +16,10 @@ class StatisticsApi:
 
         self.statistics_manager = statistics_manager
 
-        app = web.Application()
-        app.router.add_get('/', self.root)
-        app.router.add_post('/save_statistics', self.save_statistics)
-        app.router.add_post('/get_statistics', self.get_statistics)
-        web.run_app(app, port=port)
+        self.app = web.Application()
+        self.app.router.add_get('/', self.root)
+        self.app.router.add_post('/save_statistics', self.save_statistics)
+        self.app.router.add_post('/get_statistics', self.get_statistics)
 
     async def get_statistics(self, request):
         data = await request.json()
@@ -47,35 +38,19 @@ class StatisticsApi:
 
         return web.json_response({'response': result})
 
-
     async def root(self, request):
-        print(request)
+        delay = random.randint(2, 5)
+        # await asyncio.sleep(delay)
+        print("The request ->", request)
         return web.json_response({'response': 'dummy_data'})
 
-    def request_handler(self, command, url_response):
-        # Todo: change this switch/dictionary statement with a command pattern
-        result = {
-            1: self.statistics_manager.save_statistics,
-            2: self.statistics_manager.get_statistics,
-        }[command]
+    def run(self, port):
+        web.run_app(self.app, port=port)
 
-        data = json.dumps({'response': result})
-
-        # Todo: No failure controller
-        r = requests.post(url_response, data=data)
-
-    def run(self, command, url_response):
-        # Todo: change this switch/dictionary statement with a command pattern
-        result = {
-            1: self.statistics_manager.save_statistics,
-            2: self.statistics_manager.get_statistics,
-        }[command]
-
-        data = json.dumps({'response': result})
-
-        # Todo: No failure controller
-        r = requests.post(url_response, data=data)
+    def get_app(self):
+        return self.app
 
 if __name__ == '__main__':
-    tes = StatisticsApi(SimpleStatisticsManager("test_db"), 5001)
+    test = StatisticsApi(SimpleStatisticsManager("test_db"))
+    test.run(5001)
     #pass

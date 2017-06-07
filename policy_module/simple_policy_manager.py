@@ -11,7 +11,8 @@ from .util import savitzky_golay
 class SimplePolicyManager(InterfacePolicy):
     """Naive statistics manager to store and retrieve OVS statistics
 
-    This class reserve (MTU * 10) bytes from the max_capacity given to assign to every new flow.
+    This class reserve (MTU * 10) bytes from the max_capacity given to assign
+    to every new flow.
 
     """
 
@@ -41,13 +42,21 @@ class SimplePolicyManager(InterfacePolicy):
     def update_bandwidth(self, flows, flow_id):
         """Update the bandwidths of the given flows.
 
-        Look over all the active flows and look for inactive flows. Assign a bandwidth of zero to inactive flows and
-        reduce the capacity of the flows if its current bandwidth is greater than the actual bandwidth, given
-        by statistics.
-        Inactive flow is a flow that, according with the statistics, has a bandwidth smaller than the *RESERVED_BYTES*
-        Recalculate current capacity and assigns the smallest value given by double bandwidth of the given flow,
-        the available bandwidth of the network or the maximum bandwidth rate assigned (in case of hard constraint).
-        If the available capacity is zero, the bandwidth of the given flow_id is not changed.
+        Look over all the active flows and look for inactive flows. Assign a
+        bandwidth of zero to inactive flows and reduce the capacity of the
+        flows if its current bandwidth is greater than the actual bandwidth,
+        given by statistics.
+
+        Inactive flow is a flow that, according with the statistics,
+        has a bandwidth smaller than the *RESERVED_BYTES*.
+
+        Recalculate current capacity and assigns the smallest value given by
+        double bandwidth of the given flow, the available bandwidth of the
+        network or the maximum bandwidth rate assigned (in case of hard
+        constraint).
+
+        If the available capacity is zero, the bandwidth of the given flow_id
+        is not changed.
 
         Args:
             flows ([(str,[int])]): Statistics of the last active flows
@@ -55,7 +64,8 @@ class SimplePolicyManager(InterfacePolicy):
         """
 
         for id_flow, measurements in flows:
-            # Smooth dataset using Savitzky-Golay filter to avoid peak in the bandwidth estimation
+            # Smooth dataset using Savitzky-Golay filter to avoid peak in
+            # the bandwidth estimation
             measurements_hat = savitzky_golay(np.array(measurements), 51, 3)
             new_bandwidth = sum(measurements_hat)/len(measurements_hat)
             if new_bandwidth < self.reserved_bytes:
@@ -66,7 +76,8 @@ class SimplePolicyManager(InterfacePolicy):
                 self.flows[id_flow] = new_bandwidth
                 self.current_capacity += new_bandwidth
 
-        new_bandwidth = min([self.max_capacity - self.current_capacity, self.flows[flow_id]])
+        new_bandwidth = min([self.max_capacity - self.current_capacity,
+                             self.flows[flow_id]])
         new_bandwidth += self.flows[flow_id]
 
         self.current_capacity -= self.flows[flow_id]
@@ -83,7 +94,8 @@ class SimplePolicyManager(InterfacePolicy):
             bandwidth (int): New minimum bandwidth capacity to be assigned
 
         Raises:
-            AttributeError: If the new bandwidth is bigger than the current free capacity.
+            AttributeError: If the new bandwidth is bigger than the current
+                            free capacity.
         """
         total_bandwidth = bandwidth - self.flows[flow_id]
 
