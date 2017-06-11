@@ -1,6 +1,21 @@
 from .interface_manager import InterfaceStatistics
-import shelve
-from uuid import uuid4
+from tinydb import TinyDB
+from tinydb_serialization import SerializationMiddleware
+from tinydb import Query
+from datetime import datetime
+from tinydb_serialization import Serializer
+import time
+
+
+# https://github.com/msiemens/tinydb-serialization
+class DateTimeSerializer(Serializer):
+    OBJ_CLASS = datetime  # The class this serializer handles
+
+    def encode(self, obj):
+        return obj.strftime('%Y-%m-%dT%H:%M:%S')
+
+    def decode(self, s):
+        return datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
 
 
 class SimpleStatisticsManager(InterfaceStatistics):
@@ -8,31 +23,24 @@ class SimpleStatisticsManager(InterfaceStatistics):
     """
 
     def __init__(self, database_name):
-        self.db_name = database_name
-        self.cache = dict()
-        self.max_cache = 50
+        self.serialization = SerializationMiddleware()
+        self.serialization.register_serializer(DateTimeSerializer(), 'TinyDate')
+        self.db = TinyDB('{}'.format(database_name),storage=self.serialization)
 
     def save_statistics(self, statistics):
         flow_id = statistics[0] + statistics[1]
-        data_base = shelve.open(self.db_name)
-        print("This is the id 1 -> {}".format(hex(id(self))))
-        key = str(uuid4)
-        data_base[key] = statistics
-
-        # time is not taking into account, it was neglected due to the
-        # constantly update by the client
-        if flow_id not in self.cache:
-            self.cache[flow_id] = [statistics[2]]
-        else:
-            self.cache[flow_id] = [statistics[2]]+\
-                                  self.cache[flow_id][:self.max_cache-1]
-        print("This is the id 2 -> {}".format(hex(id(self))))
-        print("Here the dict -> {}".format(self.cache[flow_id]))
+        self.db.insert({'flow_id': flow_id, 'size': statistics[2],
+                        'time':statistics[3]})
         return True
 
-    def get_statistics(self, flow_id, max_stat):
-        if flow_id not in self.cache:
-            return []
+    def get_statistics(self, flow_id, max_stat, time_from, time_to):
+        query = self.db.search(Query().flow_id == flow_id )
+        result = []
+        for dic in query:
+            if time_from < dic['time'] < time_to:
+                result.append(dic['size'])
+        size = len(result)
+        if size > max_stat:
+            return result[size-max_stat:]
         else:
-            return self.cache[flow_id][:max_stat]
-
+            return result

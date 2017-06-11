@@ -11,7 +11,8 @@ from concurrent.futures import ProcessPoolExecutor
 # Todo: check https://docs.python.org/3/library/asyncio-eventloop.html or
 # https://pymotw.com/3/asyncio/executors.html for asyn operations
 # using non-asyn objects
-# Todo: possible solution to shared object in multhread is using Proxy Objects
+# Todo: possible solution to shared object in multi-thread is using Proxy
+# Objects
 
 
 class StatisticsApi:
