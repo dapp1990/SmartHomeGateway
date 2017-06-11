@@ -1,4 +1,5 @@
 import abc
+import time
 
 
 class InterfaceStatistics(object):
@@ -32,3 +33,8 @@ class InterfaceStatistics(object):
             A list of list os stings with the requested statistics
         """
         pass
+
+    @staticmethod
+    def delay_method(delay):
+        time.sleep(delay)
+        return delay

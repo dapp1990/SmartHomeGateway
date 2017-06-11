@@ -4,13 +4,14 @@ from aiohttp import web
 from aiohttp import ClientSession
 import asyncio
 import random
-import time
+import json
 from concurrent.futures import ProcessPoolExecutor
 
 # Todo: convert manager objects to async operation objects
 # Todo: check https://docs.python.org/3/library/asyncio-eventloop.html or
 # https://pymotw.com/3/asyncio/executors.html for asyn operations
 # using non-asyn objects
+# Todo: possible solution to shared object in multhread is using Proxy Objects
 
 
 class StatisticsApi:
@@ -22,6 +23,8 @@ class StatisticsApi:
                             format(statistics_manager.__class__,
                                    InterfaceStatistics.__class__))
 
+        # Todo: figure out how you start the proxy object with and object
+        # already created
         self.s_m = statistics_manager
 
         self.loop = asyncio.get_event_loop()
@@ -32,28 +35,43 @@ class StatisticsApi:
         self.app.router.add_post('/get_statistics', self.get_statistics)
 
     async def get_statistics(self, request):
-        data = await request.json()
+        json_str = await request.json()
+        data = json.loads(json_str)
 
-        result = self.s_m.get_statistics(data['flow_id'],
-                                         int(data['max_length']))
+        parameters = [data['flow_id'], int(data['max_length'])]
 
-        return web.json_response(result)
+        result = await self.loop.run_in_executor(ProcessPoolExecutor(),
+                                                 self.s_m.get_statistics,
+                                                 *parameters)
+        print(result)
+        return web.json_response({'response': result})
 
     async def save_statistics(self, request):
 
-        data = await request.json()
+        json_str = await request.json()
+        data = json.loads(json_str)
+
         parameters = [data['src'], data['dst'], data['size'], data['time']]
 
-        result = self.s_m.save_statistics(parameters)
+        # cache mechanism is impossible due to the ProcessPoolExecuter,
+        # which is running in other process with other MEMORY, so the cache
+        # is always missed!
+        # https://stackoverflow.com/questions/30333591/python-3-global-variables-with-asyncio-apscheduler
+        result = await self.loop.run_in_executor(ProcessPoolExecutor(),
+                                                 self.s_m.save_statistics,
+                                                 parameters)
+
+        # result =  self.s_m.save_statistics(parameters)
 
         return web.json_response({'response': result})
 
     # Remember, you don't have parallelism (threads etc.), you have concurrency.
     # https://stackoverflow.com/questions/42279675/syncronous-sleep-into-asyncio-coroutine
     async def root(self, request):
-        delay = random.randint(0, 1)
-        # Excutor is the solution for multi-processing with corrutines
+        delay = random.randint(0, 5)
+        # Executor is the solution for multi-processing with corrutines
         # https://stackoverflow.com/questions/43241221/how-can-i-wrap-a-synchronous-function-in-an-async-coroutine/43263397
+
         result = await self.loop.run_in_executor(ProcessPoolExecutor(),
                                                  self.s_m.delay_method, delay)
         print("The request ->", request)
@@ -66,6 +84,6 @@ class StatisticsApi:
         return self.app
 
 if __name__ == '__main__':
-    test = StatisticsApi(SimpleStatisticsManager("test_db"))
+    sm = SimpleStatisticsManager("another_db")
+    test = StatisticsApi(sm)
     test.run(5001)
-    #pass

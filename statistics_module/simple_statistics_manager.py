@@ -1,7 +1,7 @@
 from .interface_manager import InterfaceStatistics
 import shelve
 from uuid import uuid4
-import time
+
 
 class SimpleStatisticsManager(InterfaceStatistics):
     """Naive statistics manager to store and retrieve OVS statistics
@@ -15,7 +15,7 @@ class SimpleStatisticsManager(InterfaceStatistics):
     def save_statistics(self, statistics):
         flow_id = statistics[0] + statistics[1]
         data_base = shelve.open(self.db_name)
-
+        print("This is the id 1 -> {}".format(hex(id(self))))
         key = str(uuid4)
         data_base[key] = statistics
 
@@ -26,7 +26,8 @@ class SimpleStatisticsManager(InterfaceStatistics):
         else:
             self.cache[flow_id] = [statistics[2]]+\
                                   self.cache[flow_id][:self.max_cache-1]
-
+        print("This is the id 2 -> {}".format(hex(id(self))))
+        print("Here the dict -> {}".format(self.cache[flow_id]))
         return True
 
     def get_statistics(self, flow_id, max_stat):
@@ -35,6 +36,3 @@ class SimpleStatisticsManager(InterfaceStatistics):
         else:
             return self.cache[flow_id][:max_stat]
 
-    def delay_method(self, delay):
-        time.sleep(delay)
-        return delay

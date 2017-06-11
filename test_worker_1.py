@@ -2,7 +2,7 @@ import time
 import requests
 
 r = 100
-url = "http://localhost:5001/2"
+url = "http://localhost:5001"
 
 start = time.clock
 for i in range(r):
