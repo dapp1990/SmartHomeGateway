@@ -1,17 +1,17 @@
 from statistics_module.interface_manager import InterfaceStatistics
 from statistics_module.simple_statistics_manager import SimpleStatisticsManager
 from aiohttp import web
-from aiohttp import ClientSession
 import asyncio
 import random
 import json
 from concurrent.futures import ProcessPoolExecutor
 
-# Todo: convert manager objects to async operation objects
-# Todo: check https://docs.python.org/3/library/asyncio-eventloop.html or
+# Todo: create log
+
+# Note: check https://docs.python.org/3/library/asyncio-eventloop.html or
 # https://pymotw.com/3/asyncio/executors.html for asyn operations
 # using non-asyn objects
-# Todo: possible solution to shared object in multi-thread is using Proxy
+# Note: possible solution to shared object in multi-thread is using Proxy
 # Objects
 
 
@@ -39,12 +39,12 @@ class StatisticsApi:
         json_str = await request.json()
         data = json.loads(json_str)
 
-        parameters = [data['flow_id'], int(data['max_length'])]
+        parameters = [data['flow_id'], int(data['max_length']),
+                      data['from_time'], data['to_time']]
 
         result = await self.loop.run_in_executor(ProcessPoolExecutor(),
                                                  self.s_m.get_statistics,
                                                  *parameters)
-        print(result)
         return web.json_response({'response': result})
 
     async def save_statistics(self, request):
@@ -75,7 +75,6 @@ class StatisticsApi:
 
         result = await self.loop.run_in_executor(ProcessPoolExecutor(),
                                                  self.s_m.delay_method, delay)
-        print("The request ->", request)
         return web.json_response({'response': 'dummy_data', 'delay': result})
 
     def run(self, port):
@@ -85,6 +84,6 @@ class StatisticsApi:
         return self.app
 
 if __name__ == '__main__':
-    sm = SimpleStatisticsManager("another_db")
+    sm = SimpleStatisticsManager("api_db_test")
     test = StatisticsApi(sm)
     test.run(5001)
