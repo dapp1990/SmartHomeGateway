@@ -67,7 +67,7 @@ class StatisticsApi:
     # Remember, you don't have parallelism (threads etc.), you have concurrency.
     # https://stackoverflow.com/questions/42279675/syncronous-sleep-into-asyncio-coroutine
     async def root(self, request):
-        delay = random.randint(0, 5)
+        delay = random.randint(0, 1)
         # Executor is the solution for multi-processing with corrutines
         # https://stackoverflow.com/questions/43241221/how-can-i-wrap-a-synchronous-function-in-an-async-coroutine/43263397
 

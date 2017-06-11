@@ -80,24 +80,3 @@ class SimplePolicyManager(InterfacePolicy):
         reassigned_flow_bandwidth[flow_id] = new_bandwidth
 
         return reassigned_flow_bandwidth
-
-    # def set_bandwidth(self, flow_id, bandwidth):
-    #     """This method set new bandwidth to the given flow.
-    #
-    #     Args:
-    #         flow_id (int): The number of the identifier to retrieve
-    #         bandwidth (int): New minimum bandwidth capacity to be assigned
-    #
-    #     Raises:
-    #         AttributeError: If the new bandwidth is bigger than the current
-    #                         free capacity.
-    #     """
-    #     total_bandwidth = bandwidth - self.flows[flow_id]
-    #
-    #     if self.max_capacity - self.current_capacity < total_bandwidth:
-    #         raise AttributeError("Bandwidth exceeds current capacity")
-    #
-    #     self.flows[flow_id] = bandwidth
-    #     self.current_capacity += total_bandwidth
-    #
-    #     return self.flows
