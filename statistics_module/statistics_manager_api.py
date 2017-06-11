@@ -24,8 +24,6 @@ class StatisticsApi:
                             format(statistics_manager.__class__,
                                    InterfaceStatistics.__class__))
 
-        # Todo: figure out how you start the proxy object with and object
-        # already created
         self.s_m = statistics_manager
 
         self.loop = asyncio.get_event_loop()
@@ -84,6 +82,5 @@ class StatisticsApi:
         return self.app
 
 if __name__ == '__main__':
-    sm = SimpleStatisticsManager("api_db_test")
-    test = StatisticsApi(sm)
-    test.run(5001)
+    statistics_server = StatisticsApi(SimpleStatisticsManager("statistics_db"))
+    statistics_server.run(5001)

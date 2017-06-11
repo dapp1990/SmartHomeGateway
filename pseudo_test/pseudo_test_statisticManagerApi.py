@@ -5,7 +5,7 @@ import requests
 import json
 import time
 
-# Todo: create proper unittest
+# Todo: create proper unittest, NOW statistics_manager_api MUST BE RUNNING
 
 BASE_URL = "http://localhost:5001/"
 

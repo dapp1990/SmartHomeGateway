@@ -1,69 +1,48 @@
-from flask import Flask, request
-from flask.ext.aiohttp import async
-import time
-from interface_policy_manager import InterfacePolicy
-from simple_policy_manager import SimplePolicyManager
-from threading import Thread
-import json
-from functools import partial
-import requests
+from policy_module.interface_policy_manager import InterfacePolicy
+from policy_module.simple_policy_manager import SimplePolicyManager
+from concurrent.futures import ProcessPoolExecutor
+from aiohttp import web
+import asyncio
+import random
 
 
-registered_routes = {}
+class PolicyApi:
 
-def register_route(route=None, methods=['GET']):
-    #simple decorator for class based views
-    def inner(fn):
-        registered_routes[route] = (fn, methods)
-        return fn
-    return inner
-
-
-class StatisticsApi(Flask):
-
-    def __init__(self,policy_manager, *args, **kwargs):
-        if not args:
-            kwargs.setdefault('import_name', __name__)
-        Flask.__init__(self, *args, **kwargs)
-
-        # register the routes from the decorator
-        for route, (fn, ms) in registered_routes.items():
-            partial_fn = partial(fn, self)
-            partial_fn.__name__ = fn.__name__
-            self.route(route, methods=ms)(partial_fn)
+    def __init__(self, policy_manager):
 
         if not isinstance(policy_manager, InterfacePolicy):
             raise Exception("{} must be an instance of {}".
                             format(policy_manager.__class__,
                                    InterfacePolicy.__class__))
 
-        self.policy_manager = policy_manager
+        self.p_m = policy_manager
 
-    @register_route("/get_statistics", methods=['POST'])
-    def get_statistics(self, response):
+        self.loop = asyncio.get_event_loop()
+        self.app = web.Application()
 
-        data = request.get_json()
-        parameters = [data['src'], data['dst'], data['size'], data['time']]
-        url_response = data['response']
+        self.app.router.add_get('/', self.root)
+        self.app.router.add_post('/get_bandwidth', self.get_bandwidth)
+        self.app.router.add_post('/get_statistics', self.get_statistics)
 
-        thread = Thread(target=self.request_handler(1, url_response),
-                        args=[parameters])
-        thread.daemon = True
-        thread.start()
+    async def get_bandwidth(self, response):
+        # Todo: implement logic to update the
+        pass
 
-    @register_route("/")
-    def root(self):
-        return json.dumps({'response': 'dummy_data'})
+    async def burst_event(self, response):
+        # Todo: implement logic to update the
+        pass
 
-    def request_handler(self, command, url_response):
-        # Todo: change this switch/dictionary statement with a command pattern
-        result = {
-            1: self.policy_manager.save_statistics,
-            2: self.policy_manager.get_statistics,
-        }[command]
+    async def burst_event(self, response):
+        # Todo: implement logic to update the
+        pass
 
-        data = json.dumps({'response': result})
+    async def root(self, request):
+        delay = random.randint(0, 5)
 
-        # Todo: No failure controller
-        r = requests.post(url_response, data=data)
+        result = await self.loop.run_in_executor(ProcessPoolExecutor(),
+                                                 self.s_m.delay_method, delay)
+        return web.json_response({'response': 'dummy_data', 'delay': result})
 
+if __name__ == '__main__':
+    policy_server = PolicyApi(SimplePolicyManager())
+    policy_server.run(5002)

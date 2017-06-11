@@ -17,35 +17,27 @@ class SimplePolicyManager(InterfacePolicy):
     """
 
     def __init__(self, max_capacity, reserved_bytes):
-        self.flows = dict()
-        self.requests = []
         self.max_capacity = max_capacity - reserved_bytes
         self.reserved_bytes = reserved_bytes
-        self.current_capacity = 0
 
-    def add_flow(self, flow_id):
-        """
+    def get_bandwidth(self, flow_id, current_flows):
+        """ Simple algorithm which assign the minimum amount of bandwidth.
 
         Args:
             flow_id (str): id of the flow to monitor
         """
 
-        self.flows[flow_id] = self.reserved_bytes
-        self.current_capacity += self.reserved_bytes
-
-        return self.flows[flow_id]
-
-    def remove_flow(self):
-        pass
+        return self.reserved_bytes
 
     # Todo: add hard constrains (max and min bandwidth rate)
-    def update_bandwidth(self, flows, flow_id):
+    def update_bandwidth(self, flow_id, flow_current_bandwidth,
+                         flow_statistics):
         """Update the bandwidths of the given flows.
 
-        Look over all the active flows and look for inactive flows. Assign a
-        bandwidth of zero to inactive flows and reduce the capacity of the
-        flows if its current bandwidth is greater than the actual bandwidth,
-        given by statistics.
+        Look over all the given flows and their statistics. Find inactive
+        flows. Assign a bandwidth of zero to inactive flows and reduce the
+        capacity of the flows if its current bandwidth is greater than the
+        actual bandwidth, given by statistics.
 
         Inactive flow is a flow that, according with the statistics,
         has a bandwidth smaller than the *RESERVED_BYTES*.
@@ -59,50 +51,53 @@ class SimplePolicyManager(InterfacePolicy):
         is not changed.
 
         Args:
-            flows ([(str,[int])]): Statistics of the last active flows
-            flow_id (int): The flow id which bandwidth request to change.
+            flow_current_bandwidth: bandwidth of the current flows.
+            flow_statistics ([(str,[int])]): Statistics of the last active
+            flows.
+            flow_id (int): The flow id which bandwidth request to be changed.
         """
 
-        for id_flow, measurements in flows:
+        reassigned_flow_bandwidth = {}
+
+        for f_id, measurements in flow_statistics:
             # Smooth dataset using Savitzky-Golay filter to avoid peak in
             # the bandwidth estimation
             measurements_hat = savitzky_golay(np.array(measurements), 51, 3)
             new_bandwidth = sum(measurements_hat)/len(measurements_hat)
+
             if new_bandwidth < self.reserved_bytes:
-                self.current_capacity -= self.flows[id_flow]
-                self.flows[id_flow] = 0
-            elif new_bandwidth < self.flows[id_flow]:
-                self.current_capacity -= self.flows[id_flow]
-                self.flows[id_flow] = new_bandwidth
-                self.current_capacity += new_bandwidth
+                reassigned_flow_bandwidth[f_id] = 0
+            elif new_bandwidth < flow_current_bandwidth[f_id]:
+                reassigned_flow_bandwidth[f_id] = new_bandwidth
+            else:
+                reassigned_flow_bandwidth[f_id] = flow_current_bandwidth[f_id]
 
-        new_bandwidth = min([self.max_capacity - self.current_capacity,
-                             self.flows[flow_id]])
-        new_bandwidth += self.flows[flow_id]
+        current_capacity = sum(reassigned_flow_bandwidth.values())
 
-        self.current_capacity -= self.flows[flow_id]
-        self.flows[flow_id] = new_bandwidth
-        self.current_capacity += new_bandwidth
+        new_bandwidth = min([self.max_capacity - current_capacity,
+                             flow_current_bandwidth[flow_id]*2])
 
-        return self.flows[flow_id]
+        reassigned_flow_bandwidth[flow_id] = new_bandwidth
 
-    def set_bandwidth(self, flow_id, bandwidth):
-        """This method set new bandwidth to the given flow.
+        return reassigned_flow_bandwidth
 
-        Args:
-            flow_id (int): The number of the identifier to retrieve
-            bandwidth (int): New minimum bandwidth capacity to be assigned
-
-        Raises:
-            AttributeError: If the new bandwidth is bigger than the current
-                            free capacity.
-        """
-        total_bandwidth = bandwidth - self.flows[flow_id]
-
-        if self.max_capacity - self.current_capacity < total_bandwidth:
-            raise AttributeError("Bandwidth exceeds current capacity")
-
-        self.flows[flow_id] = bandwidth
-        self.current_capacity += total_bandwidth
-
-        return self.flows
+    # def set_bandwidth(self, flow_id, bandwidth):
+    #     """This method set new bandwidth to the given flow.
+    #
+    #     Args:
+    #         flow_id (int): The number of the identifier to retrieve
+    #         bandwidth (int): New minimum bandwidth capacity to be assigned
+    #
+    #     Raises:
+    #         AttributeError: If the new bandwidth is bigger than the current
+    #                         free capacity.
+    #     """
+    #     total_bandwidth = bandwidth - self.flows[flow_id]
+    #
+    #     if self.max_capacity - self.current_capacity < total_bandwidth:
+    #         raise AttributeError("Bandwidth exceeds current capacity")
+    #
+    #     self.flows[flow_id] = bandwidth
+    #     self.current_capacity += total_bandwidth
+    #
+    #     return self.flows
