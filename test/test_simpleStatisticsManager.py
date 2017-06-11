@@ -15,7 +15,7 @@ class TestSimpleStatisticsManager(TestCase):
         from_time = to_time - timedelta(seconds=2)
 
         results = self.simple_manager.get_statistics(
-            '192.168.19.20192.168.19.77', 10, from_time, to_time)
+            '192.168.19.20192.168.19.77', 10, str(from_time), str(to_time))
 
         self.assertEquals(0, len(results))
 
@@ -23,7 +23,8 @@ class TestSimpleStatisticsManager(TestCase):
 
         results = self.simple_manager.save_statistics(['192.168.19.20',
                                                        '192.168.19.77',
-                                                       '150', datetime.now()])
+                                                       '150',
+                                                       str(datetime.now())])
 
         self.assertEquals(results, True)
 
@@ -31,7 +32,7 @@ class TestSimpleStatisticsManager(TestCase):
             results = self.simple_manager.save_statistics(['192.168.19.20',
                                                            '192.168.19.77',
                                                            '150',
-                                                           datetime.now()])
+                                                           str(datetime.now())])
 
         self.assertEquals(results, True)
 
@@ -39,7 +40,7 @@ class TestSimpleStatisticsManager(TestCase):
         from_time = to_time - timedelta(seconds=2)
 
         results = self.simple_manager.get_statistics(
-            '192.168.19.20192.168.19.77', 10, from_time, to_time)
+            '192.168.19.20192.168.19.77', 10, str(from_time), str(to_time))
 
         self.assertEquals(10, len(results))
 
@@ -48,13 +49,13 @@ class TestSimpleStatisticsManager(TestCase):
         for i in range(3):
             self.simple_manager.save_statistics(['192.168.19.20',
                                                  '192.168.19.77', '150',
-                                                 datetime.now()])
+                                                 str(datetime.now())])
 
         to_time = datetime.now()
         from_time = to_time - timedelta(seconds=2)
 
         results = self.simple_manager.get_statistics(
-            '192.168.19.20192.168.19.77', 10, from_time, to_time)
+            '192.168.19.20192.168.19.77', 10, str(from_time), str(to_time))
 
         self.assertEquals(3, len(results))
 
@@ -63,13 +64,13 @@ class TestSimpleStatisticsManager(TestCase):
         for i in range(100):
             self.simple_manager.save_statistics(['192.168.19.20',
                                                  '192.168.19.77', '150',
-                                                 datetime.now()])
+                                                 str(datetime.now())])
 
         to_time = datetime.now()
         from_time = to_time - timedelta(seconds=2)
 
         results = self.simple_manager.get_statistics(
-            '192.168.19.20192.168.19.77', 50, from_time, to_time)
+            '192.168.19.20192.168.19.77', 50, str(from_time), str(to_time))
 
         self.assertEquals(50, len(results))
 
@@ -78,19 +79,19 @@ class TestSimpleStatisticsManager(TestCase):
         for i in range(50):
             self.simple_manager.save_statistics(['192.168.19.20',
                                                  '192.168.19.77', i,
-                                                 datetime.now()])
+                                                 str(datetime.now())])
         time.sleep(5)
 
         for i in range(50):
             self.simple_manager.save_statistics(['192.168.19.20',
                                                  '192.168.19.77', i+50,
-                                                 datetime.now()])
+                                                 str(datetime.now())])
 
         to_time = datetime.now()
         from_time = to_time - timedelta(seconds=2)
 
         results = self.simple_manager.get_statistics(
-            '192.168.19.20192.168.19.77', 25, from_time, to_time)
+            '192.168.19.20192.168.19.77', 25, str(from_time), str(to_time))
         for i in range(25):
             self.assertEquals(i+75, results[i])
 

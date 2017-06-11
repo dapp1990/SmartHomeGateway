@@ -22,12 +22,14 @@ class InterfaceStatistics(object):
         pass
 
     @abc.abstractmethod
-    def get_statistics(self, table_id, max_stat):
+    def get_statistics(self, table_id, max_stat, from_time_str, to_time_str):
         """Abstract method to be implemented by the concrete StatisticsManager class.
 
         Args:
             table_id (int): The number of the identifier to retrieve
             max_stat (int): Maximum number of list of statistics to retrieve
+            from_time_str (string): the initial time
+            to_time_str (string): the end time
 
         Return:
             A list of list os stings with the requested statistics

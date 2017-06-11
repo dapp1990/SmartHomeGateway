@@ -30,11 +30,14 @@ class SimpleStatisticsManager(InterfaceStatistics):
     def save_statistics(self, statistics):
         flow_id = statistics[0] + statistics[1]
         self.db.insert({'flow_id': flow_id, 'size': statistics[2],
-                        'time':statistics[3]})
+                        'time': datetime.strptime(statistics[3], '%Y-%m-%d '
+                                                                 '%H:%M:%S.%f')})
         return True
 
-    def get_statistics(self, flow_id, max_stat, time_from, time_to):
-        query = self.db.search(Query().flow_id == flow_id )
+    def get_statistics(self, flow_id, max_stat, time_from_str, time_to_str):
+        time_from = datetime.strptime(time_from_str, '%Y-%m-%d %H:%M:%S.%f')
+        time_to = datetime.strptime(time_to_str, '%Y-%m-%d %H:%M:%S.%f')
+        query = self.db.search(Query().flow_id == flow_id)
         result = []
         for dic in query:
             if time_from < dic['time'] < time_to:
