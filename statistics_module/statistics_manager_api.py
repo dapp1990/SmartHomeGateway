@@ -34,8 +34,7 @@ class StatisticsApi:
         self.app.router.add_post('/get_statistics', self.get_statistics)
 
     async def get_statistics(self, request):
-        json_str = await request.json()
-        data = json.loads(json_str)
+        data = await request.json()
 
         parameters = [data['flow_id'], int(data['max_length']),
                       data['from_time'], data['to_time']]
@@ -43,12 +42,11 @@ class StatisticsApi:
         result = await self.loop.run_in_executor(ProcessPoolExecutor(),
                                                  self.s_m.get_statistics,
                                                  *parameters)
+
         return web.json_response({'response': result})
 
     async def save_statistics(self, request):
-
-        json_str = await request.json()
-        data = json.loads(json_str)
+        data = await request.json()
 
         parameters = [data['src'], data['dst'], data['size'], data['time']]
 

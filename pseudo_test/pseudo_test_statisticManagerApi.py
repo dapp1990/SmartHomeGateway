@@ -25,7 +25,7 @@ for i in range(100):
     now_str = str(datetime.now())
     data = {"src": "192.168.10.90", "dst": "192.168.30.201", "size": 20000+i,
             "time": now_str}
-    res = requests.post(BASE_URL + "save_statistics", json=json.dumps(data),
+    res = requests.post(BASE_URL + "save_statistics", json=data,
                         headers={'Content-type': 'application/json'})
 
     assert res.status_code == 200
@@ -35,9 +35,9 @@ for i in range(100):
 to_time = datetime.now()
 from_time = to_time - timedelta(seconds=2)
 
-data = {"flow_id": "192.168.10.90192.168.30.201", "max_length": 20,
-        "from_time": str(from_time), "to_time": str(to_time)}
-res = requests.post(BASE_URL + "get_statistics", json=json.dumps(data),
+data = {'flow_id': '192.168.10.90192.168.30.201', 'max_length': 20,
+        'from_time': str(from_time), 'to_time': str(to_time)}
+res = requests.post(BASE_URL + "get_statistics", json=data,
                     headers={'Content-type': 'application/json'})
 assert res.status_code == 200
 data = res.json()
@@ -51,7 +51,7 @@ from_time = to_time - timedelta(seconds=2)
 
 data = {"flow_id": "192.168.10.90192.168.30.201", "max_length": 20,
         "from_time": str(from_time), "to_time": str(to_time)}
-res = requests.post(BASE_URL + "get_statistics", json=json.dumps(data),
+res = requests.post(BASE_URL + "get_statistics", json=data,
                     headers={'Content-type': 'application/json'})
 assert res.status_code == 200
 data = res.json()

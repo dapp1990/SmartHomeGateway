@@ -51,19 +51,24 @@ class SimplePolicyManager(InterfacePolicy):
         is not changed.
 
         Args:
-            flow_current_bandwidth: bandwidth of the current flows.
+            flow_current_bandwidth: bandwidth of the current flows without
+            flow_id.
             flow_statistics ([(str,[int])]): Statistics of the last active
-            flows.
+            flows without flow_id.
             flow_id (int): The flow id which bandwidth request to be changed.
         """
 
         reassigned_flow_bandwidth = {}
 
-        for f_id, measurements in flow_statistics:
+        for f_id in flow_statistics:
             # Smooth dataset using Savitzky-Golay filter to avoid peak in
             # the bandwidth estimation
-            measurements_hat = savitzky_golay(np.array(measurements), 51, 3)
-            new_bandwidth = sum(measurements_hat)/len(measurements_hat)
+            if flow_statistics[f_id]:
+                measurements_hat = \
+                    savitzky_golay(np.array(flow_statistics[f_id]), 51, 3)
+                new_bandwidth = sum(measurements_hat)/len(measurements_hat)
+            else:
+                new_bandwidth = 0
 
             if new_bandwidth < self.reserved_bytes:
                 reassigned_flow_bandwidth[f_id] = 0

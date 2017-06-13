@@ -51,18 +51,19 @@ class PolicyApi:
 
         statistics = {}
         async with ClientSession() as session:
-            for flow_id, capacity in data['current_flows']:
-                j_data = {'flow_id': flow_id,
-                          'max_length': self.max_statistics,
-                          'from_time': str(from_time),
-                          'to_time': str(to_time)}
-                async with session.post(json=j_data) as resp:
-                    statistics[flow_id] = await resp.json()
-
+            for flow_id in data['current_flows']:
+                if data['flow_id'] is not flow_id:
+                    j_data = {'flow_id': flow_id,
+                              'max_length': self.max_statistics,
+                              'from_time': str(from_time),
+                              'to_time': str(to_time)}
+                    async with session.post(self.uss+"get_statistics",
+                                            json=j_data) as resp:
+                        response = await resp.json()
+                        statistics[flow_id] = response['response']
         parameters = [data['flow_id'], data['current_flows'], statistics]
-
         result = await self.loop.run_in_executor(ProcessPoolExecutor(),
-                                                 self.p_m.get_bandwidth,
+                                                 self.p_m.update_bandwidth,
                                                  *parameters)
         return web.json_response({'response': result})
 
