@@ -8,6 +8,9 @@ import asyncio
 import random
 import json
 
+# todo: create log
+
+
 class PolicyApi:
 
     def __init__(self, policy_manager, url_statistics_server, time_lapse,
