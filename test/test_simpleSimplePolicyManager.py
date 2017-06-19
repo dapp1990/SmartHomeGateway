@@ -8,8 +8,7 @@ class TestSimplePolicyManager(TestCase):
     def test_simple_zero_update_bandwidth(self):
         reserved_bytes = (150 + 16) * 10
         simple_policy_manager = SimplePolicyManager(200000,reserved_bytes)
-        flow_statistics = []
-        avg_data_set = dict()
+        flow_statistics = {}
         flow_bandwidths = {}
 
         for i in range(10):
@@ -20,8 +19,7 @@ class TestSimplePolicyManager(TestCase):
             temp = np.ones(20)
             for j in range(20):
                 if j%2 == 0: temp[j] = 0
-            avg_data_set[i] = np.mean(temp)
-            flow_statistics.append([i,temp])
+            flow_statistics[i] = temp.tolist()
 
         update_result = \
             simple_policy_manager.update_bandwidth(0, flow_bandwidths,
@@ -34,7 +32,7 @@ class TestSimplePolicyManager(TestCase):
     def test_set_bandwidth_more_capacity_low_statistics(self):
         reserved_bytes = (150 + 16) * 10
         simple_policy_manager = SimplePolicyManager(300000, reserved_bytes)
-        flow_statistics = []
+        flow_statistics = {}
         flow_bandwidths = {}
 
         for i in range(10):
@@ -50,7 +48,7 @@ class TestSimplePolicyManager(TestCase):
                 for j in range(0,20):
                     temp[j] = 2000
 
-            flow_statistics.append([i,temp])
+            flow_statistics[i] = temp.tolist()
 
         # The bandwidth of the others is changed due to the statistics
 
@@ -65,7 +63,7 @@ class TestSimplePolicyManager(TestCase):
     def test_set_bandwidth_more_capacity_high_statistics(self):
         reserved_bytes = (150 + 16) * 10
         simple_policy_manager = SimplePolicyManager(300000, reserved_bytes)
-        flow_statistics = []
+        flow_statistics = {}
         flow_bandwidths = {}
 
         for i in range(10):
@@ -80,10 +78,12 @@ class TestSimplePolicyManager(TestCase):
             if i:
                 for j in range(0,20):
                     temp[j] = 22000
-            flow_statistics.append([i,temp])
+            flow_statistics[i] = temp.tolist()
 
         # The bandwidth of the others is NOT changed, statistics has bigger numbers and according to policies,
         # the bandwidth can only be reduced, not increased
+
+
         update_result = \
             simple_policy_manager.update_bandwidth(0, flow_bandwidths,
                                                    flow_statistics)
@@ -95,7 +95,7 @@ class TestSimplePolicyManager(TestCase):
     def test_set_bandwidth_set_free_capacity(self):
         reserved_bytes = (150 + 16) * 10
         simple_policy_manager = SimplePolicyManager(18000,reserved_bytes)
-        flow_statistics = []
+        flow_statistics = {}
         flow_bandwidths = {}
 
         for i in range(10):
@@ -108,7 +108,7 @@ class TestSimplePolicyManager(TestCase):
                 for j in range(0, 20):
                     temp[j] = 22000
 
-            flow_statistics.append([i, temp])
+            flow_statistics[i] = temp.tolist()
 
         # The bandwidth of the others is NOT changed, statistics has bigger numbers and according to policies,
         # the bandwidth can only be reduced, not increased
