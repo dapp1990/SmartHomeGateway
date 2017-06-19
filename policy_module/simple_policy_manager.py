@@ -1,8 +1,10 @@
 from .interface_policy_manager import InterfacePolicy
-import shelve
-from uuid import uuid4
+import logging as log
 import numpy as np
 from .util import savitzky_golay
+
+# FIXME: watch out for the maxima capacity! you never ever assigned more
+# capacity than available
 
 
 class SimplePolicyManager(InterfacePolicy):
@@ -13,7 +15,13 @@ class SimplePolicyManager(InterfacePolicy):
 
     """
 
-    def __init__(self, max_capacity, reserved_bytes):
+    def __init__(self, max_capacity, reserved_bytes, level=log.INFO):
+        log.basicConfig(filename='SimplePolicyManager.log',
+                        format='%(''asctime)s - %(levelname)s - %(message)s',
+                        filemode='w',
+                        level=level)
+        log.info("initializing SimplePolicyManager class")
+
         self.max_capacity = max_capacity - reserved_bytes
         self.reserved_bytes = reserved_bytes
 
@@ -23,6 +31,13 @@ class SimplePolicyManager(InterfacePolicy):
         Args:
             flow_id (str): id of the flow to monitor
         """
+
+        current_capacity = sum(current_flows.values())
+
+        if self.max_capacity+self.reserved_bytes <= current_capacity:
+            log.warning("Impossible to assign bandwidth, current capacity "
+                        "is larger than max_capacity+reserved_capacity")
+            return 0
 
         return self.reserved_bytes
 
@@ -76,9 +91,27 @@ class SimplePolicyManager(InterfacePolicy):
 
         current_capacity = sum(reassigned_flow_bandwidth.values())
 
-        new_bandwidth = min([self.max_capacity - current_capacity,
-                             flow_current_bandwidth[flow_id]*2])
+        # Todo: new a log to see if there is any warning here!
+        available_bandwidth = self.max_capacity - current_capacity
+        if available_bandwidth <= 0:
+            log.warning("No more bandwidth available for %s", flow_id)
+            new_bandwidth = 0
+        else:
+            log.info("Difference %s", available_bandwidth)
+            log.info("Current capacity %s", flow_current_bandwidth[flow_id])
 
-        reassigned_flow_bandwidth[flow_id] = new_bandwidth
+            new_bandwidth = min([available_bandwidth,
+                                 flow_current_bandwidth[flow_id]])
+
+        reassigned_flow_bandwidth[flow_id] = \
+            flow_current_bandwidth[flow_id] + new_bandwidth
+
+        current_capacity = sum(reassigned_flow_bandwidth.values())
+
+        if self.max_capacity+self.reserved_bytes < current_capacity:
+            log.warning("Capacity overflow max+reserved %s - assigned capacity "
+                        "%s",
+                        self.max_capacity + self.reserved_bytes,
+                        current_capacity)
 
         return reassigned_flow_bandwidth

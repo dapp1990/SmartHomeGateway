@@ -4,7 +4,7 @@ import numpy as np
 
 
 class TestSimplePolicyManager(TestCase):
-
+    """
     def test_simple_zero_update_bandwidth(self):
         reserved_bytes = (150 + 16) * 10
         simple_policy_manager = SimplePolicyManager(200000,reserved_bytes)
@@ -80,9 +80,9 @@ class TestSimplePolicyManager(TestCase):
                     temp[j] = 22000
             flow_statistics[i] = temp.tolist()
 
-        # The bandwidth of the others is NOT changed, statistics has bigger numbers and according to policies,
-        # the bandwidth can only be reduced, not increased
-
+        # The bandwidth of the others is NOT changed, statistics has bigger
+        # numbers and according to policies, the bandwidth can only be
+        # reduced, not increased
 
         update_result = \
             simple_policy_manager.update_bandwidth(0, flow_bandwidths,
@@ -91,7 +91,7 @@ class TestSimplePolicyManager(TestCase):
         for i in range(1, 10):
             element = update_result[i]
             self.assertAlmostEqual(20000, element)
-
+    """
     def test_set_bandwidth_set_free_capacity(self):
         reserved_bytes = (150 + 16) * 10
         simple_policy_manager = SimplePolicyManager(18000,reserved_bytes)
@@ -110,8 +110,9 @@ class TestSimplePolicyManager(TestCase):
 
             flow_statistics[i] = temp.tolist()
 
-        # The bandwidth of the others is NOT changed, statistics has bigger numbers and according to policies,
-        # the bandwidth can only be reduced, not increased
+        # The bandwidth of the others is NOT changed, statistics has bigger
+        # numbers and according to policies, the bandwidth can only be
+        # reduced, not increased
         update_result = \
             simple_policy_manager.update_bandwidth(0, flow_bandwidths,
                                                    flow_statistics)
@@ -119,3 +120,6 @@ class TestSimplePolicyManager(TestCase):
         for i in range(1, 10):
             element = update_result[i]
             self.assertAlmostEqual(reserved_bytes, element)
+
+        capacity = sum(update_result.values())
+        self.assertEquals(capacity, 18000)

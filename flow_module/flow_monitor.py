@@ -1,9 +1,8 @@
 from flow_module.outgoing_flow_scheduler import OutgoingFlowScheduler
-import requests
-import json
 from multiprocessing import Queue
 from threading import Thread
-
+import requests
+import json
 
 # reason _packet_in_handler is already asyncronous
 # https://thenewstack.io/sdn-series-part-iv-ryu-a-rich
@@ -15,6 +14,8 @@ class FlowMonitor:
 
     def __init__(self):
         self.policy_url = "http://localhost:5002"
+
+        self.max_size = 100
 
         self.outgoing_flows = {}
         self.bandwidths = {}
@@ -67,8 +68,6 @@ class FlowMonitor:
 
     def update_bandwidths(self, id_flow):
         # TODO[id:1]: maybe it is better to request the bandwidth of every flow
-        # FIXME: how you are going to deal with multiple request from the
-        # same flow
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
         res = requests.post(self.policy_url + "/update_bandwidths",
                             json=json.dumps(data),
@@ -85,7 +84,10 @@ class FlowMonitor:
     # scheduler and not make this cache here
     def set_bandwidth(self,id_flow, bandwidth):
         self.outgoing_flows[id_flow] = bandwidth
-        self.outgoing_flows[id_flow] = OutgoingFlowScheduler(bandwidth)
+        self.outgoing_flows[id_flow] = OutgoingFlowScheduler(id_flow,
+                                                             bandwidth,
+                                                             self,
+                                                             self.max_size)
 
     def set_outgoing_scheduler(self, id_flow, msg_len, datapath, in_port,
                                msg, parser):

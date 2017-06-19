@@ -6,11 +6,16 @@ import time
 
 class OutgoingFlowScheduler(app_manager.RyuApp):
 
-    def __init__(self, rate,  *args, **kwargs):
+    def __init__(self, id_flow, rate, monitor, max_size, *args, **kwargs):
 
         super(OutgoingFlowScheduler, self).__init__(*args, **kwargs)
 
+        self.monitor = monitor
+        self.waiting_response = False
+        self.max_size = max_size
+        self.id_flow = id_flow
         self.rate = rate
+
         self.time_checkpoint = time.time()
         self.queue = Queue()
         self.thread = Thread(target=self.scheduler)
@@ -18,12 +23,17 @@ class OutgoingFlowScheduler(app_manager.RyuApp):
         self.thread.start()
 
     def set_rate(self, rate):
+        self.waiting_response = False
         self.rate = rate
 
     def get_rate(self):
         return self.rate
 
     def add_flow(self, msg_len, datapath, out_format):
+        if self.queue.qsize() > self.max_size and not self.waiting_response:
+            self.waiting_response = True
+            self.monitor.process_burst(self.id_flow)
+
         self.queue.put(msg_len, datapath, out_format)
 
     def scheduler(self):
