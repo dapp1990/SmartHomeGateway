@@ -4,9 +4,6 @@ from uuid import uuid4
 import numpy as np
 from .util import savitzky_golay
 
-# Todo: add a wrapper that notifies immediately to the flow manager when is
-# an update
-
 
 class SimplePolicyManager(InterfacePolicy):
     """Naive statistics manager to store and retrieve OVS statistics

@@ -6,9 +6,6 @@ class InterfacePolicy(object):
     Interface for PolicyManager classes
     """
     __metaclass__ = abc.ABCMeta
-    # Todo: the class variables were omitted
-    # total_capacity (int)
-    # devices (dict[int] = int)
 
     @abc.abstractmethod
     def get_bandwidth(self, flow_id, current_flows):

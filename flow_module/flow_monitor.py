@@ -21,7 +21,6 @@ class FlowMonitor:
 
         self.local_port = 2  # 4294967294
 
-        #TODO: check for correct number of workers
         self.outgoing_queue = Queue()
         self.outgoing_thread = Thread(target=self.send_message)
         self.outgoing_thread.daemon = True
@@ -104,4 +103,4 @@ class FlowMonitor:
                                          actions=actions,
                                          data=msg.data)
 
-        self.outgoing_flows[id_flow].add_flow([msg_len, datapath, out_format])
+        self.outgoing_flows[id_flow].add_flow(msg_len, datapath, out_format)

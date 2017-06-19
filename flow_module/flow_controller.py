@@ -7,10 +7,10 @@ from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from datetime import datetime
-from ryu.lib import hub
 from flow_module.flow_monitor import FlowMonitor
+from multiprocessing import Queue
+from threading import Thread
 import requests
-import json
 
 
 # reason _packet_in_handler is already asyncronous
@@ -25,6 +25,11 @@ class FlowController(app_manager.RyuApp):
 
         self.statistics_url = "http://localhost:5001"
         self.monitor = FlowMonitor()
+
+        self.statistics_queue = Queue()
+        self.statistics_thread = Thread(target=self.save_statistics)
+        self.statistics_thread.daemon = True
+        self.statistics_thread.start()
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -89,10 +94,10 @@ class FlowController(app_manager.RyuApp):
 
         self.monitor.process_message(*parameters)
 
-        #FIXME: create a new asyn queue to handle the saving statistics request
-        await self.save_statistics(dst, ev, src)
+        self.statistics_queue.put(dst, ev, src)
 
-    async def save_statistics(self, dst, ev, src):
+    def save_statistics(self):
+        dst, ev, src = self.statistics_queue.get()
         now_str = str(datetime.now())
         data = {"src": src,
                 "dst": dst,
@@ -101,3 +106,4 @@ class FlowController(app_manager.RyuApp):
         res = requests.post(self.statistics_url + "/save_statistics",
                             json=data,
                             headers={'Content-type': 'application/json'})
+        self.statistics_queue.task_done()

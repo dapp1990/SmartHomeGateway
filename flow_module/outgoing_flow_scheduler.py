@@ -23,10 +23,9 @@ class OutgoingFlowScheduler(app_manager.RyuApp):
     def get_rate(self):
         return self.rate
 
-    def add_flow(self, flow):
-        self.queue.put(flow)
+    def add_flow(self, msg_len, datapath, out_format):
+        self.queue.put(msg_len, datapath, out_format)
 
-    # TODO: Be sure than self.queue and self.time_checkpoint are mutable
     def scheduler(self):
         while True:
             msg_len, datapath, out_format = self.queue.get()
