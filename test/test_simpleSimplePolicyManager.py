@@ -4,7 +4,7 @@ import numpy as np
 
 
 class TestSimplePolicyManager(TestCase):
-    """
+    
     def test_simple_zero_update_bandwidth(self):
         reserved_bytes = (150 + 16) * 10
         simple_policy_manager = SimplePolicyManager(200000,reserved_bytes)
@@ -91,7 +91,7 @@ class TestSimplePolicyManager(TestCase):
         for i in range(1, 10):
             element = update_result[i]
             self.assertAlmostEqual(20000, element)
-    """
+
     def test_set_bandwidth_set_free_capacity(self):
         reserved_bytes = (150 + 16) * 10
         simple_policy_manager = SimplePolicyManager(18000,reserved_bytes)
