@@ -1,4 +1,4 @@
-from flow_module.outgoing_flow_scheduler import OutgoingFlowScheduler
+from flow_module.flow_scheduler import FlowScheduler
 from multiprocessing import Queue
 from threading import Thread
 import requests
@@ -6,6 +6,7 @@ import json
 
 # reason _packet_in_handler is already asyncronous
 # https://thenewstack.io/sdn-series-part-iv-ryu-a-rich
+
 
 class FlowMonitor:
     """ In order to have quick responses, two queue where implement. One for
@@ -84,10 +85,10 @@ class FlowMonitor:
     # scheduler and not make this cache here
     def set_bandwidth(self,id_flow, bandwidth):
         self.outgoing_flows[id_flow] = bandwidth
-        self.outgoing_flows[id_flow] = OutgoingFlowScheduler(id_flow,
-                                                             bandwidth,
-                                                             self,
-                                                             self.max_size)
+        self.outgoing_flows[id_flow] = FlowScheduler(id_flow,
+                                                     bandwidth,
+                                                     self,
+                                                     self.max_size)
 
     def set_outgoing_scheduler(self, id_flow, msg_len, datapath, in_port,
                                msg, parser):
@@ -97,7 +98,7 @@ class FlowMonitor:
         else:
             out_port = 1
 
-        # Create the out paket format to be sent out
+        # Create the out packet format to be sent out
         actions = [parser.OFPActionOutput(out_port)]
         out_format = parser.OFPPacketOut(datapath=datapath,
                                          buffer_id=msg.buffer_id,

@@ -4,11 +4,11 @@ from threading import Thread
 import time
 
 
-class OutgoingFlowScheduler(app_manager.RyuApp):
+class FlowScheduler(app_manager.RyuApp):
 
     def __init__(self, id_flow, rate, monitor, max_size, *args, **kwargs):
 
-        super(OutgoingFlowScheduler, self).__init__(*args, **kwargs)
+        super(FlowScheduler, self).__init__(*args, **kwargs)
 
         self.monitor = monitor
         self.waiting_response = False

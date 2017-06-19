@@ -97,9 +97,6 @@ class SimplePolicyManager(InterfacePolicy):
             log.warning("No more bandwidth available for %s", flow_id)
             new_bandwidth = 0
         else:
-            log.info("Difference %s", available_bandwidth)
-            log.info("Current capacity %s", flow_current_bandwidth[flow_id])
-
             new_bandwidth = min([available_bandwidth,
                                  flow_current_bandwidth[flow_id]])
 
