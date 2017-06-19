@@ -4,17 +4,21 @@ from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timedelta
 from aiohttp import ClientSession
 from aiohttp import web
+import logging as log
 import asyncio
-import random
 import json
-
-# todo: create log
 
 
 class PolicyApi:
 
     def __init__(self, policy_manager, url_statistics_server, time_lapse,
-                 max_statistics):
+                 max_statistics, level=log.INFO):
+
+        log.basicConfig(filename='PolicyAPI.log',
+                        format='%(''asctime)s - %(levelname)s - %(message)s',
+                        filemode='w',
+                        level=level)
+        log.info("initializing PolicyAPI class")
 
         if not isinstance(policy_manager, InterfacePolicy):
             raise Exception("{} must be an instance of {}".
@@ -35,6 +39,7 @@ class PolicyApi:
         self.max_statistics = max_statistics
 
     async def get_bandwidth(self, request):
+        log.info("get_bandwidth with parameters %s",request)
         json_str = await request.json()
         data = json.loads(json_str)
 
@@ -43,9 +48,11 @@ class PolicyApi:
         result = await self.loop.run_in_executor(ProcessPoolExecutor(),
                                                  self.p_m.get_bandwidth,
                                                  *parameters)
+        log.info("result of get_bandwidth: %s", result)
         return web.json_response({'response': result})
 
     async def update_bandwidths(self, request):
+        log.info("update_bandwidths with parameters %s", request)
         json_str = await request.json()
         data = json.loads(json_str)
 
@@ -68,17 +75,19 @@ class PolicyApi:
         result = await self.loop.run_in_executor(ProcessPoolExecutor(),
                                                  self.p_m.update_bandwidth,
                                                  *parameters)
+        log.info("result of update_bandwidths: %s", result)
         return web.json_response({'response': result})
 
     async def root(self, request):
-
+        log.info("root request")
         async with ClientSession() as session:
             async with session.get(self.uss) as resp:
                 data = await resp.json()
-
+        log.info("finish root request")
         return web.json_response({'response': data})
 
     def run(self, port):
+        log.info("Run api")
         web.run_app(self.app, port=port)
 
     def get_app(self):

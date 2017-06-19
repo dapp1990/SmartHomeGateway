@@ -1,12 +1,11 @@
 from statistics_module.interface_manager import InterfaceStatistics
 from statistics_module.simple_statistics_manager import SimpleStatisticsManager
 from aiohttp import web
+import logging as log
 import asyncio
 import random
-import json
 from concurrent.futures import ProcessPoolExecutor
 
-# Todo: create log
 
 # Note: check https://docs.python.org/3/library/asyncio-eventloop.html or
 # https://pymotw.com/3/asyncio/executors.html for asyn operations
@@ -17,7 +16,14 @@ from concurrent.futures import ProcessPoolExecutor
 
 class StatisticsApi:
 
-    def __init__(self,statistics_manager):
+    def __init__(self,statistics_manager, level=log.INFO):
+
+        log.basicConfig(filename='StatisticsApi.log',
+                        format='%(''asctime)s - %(levelname)s - %(message)s',
+                        filemode='w',
+                        level=level)
+
+        log.info("initializing StatisticsApi class")
 
         if not isinstance(statistics_manager, InterfaceStatistics):
             raise Exception("{} must be an instance of {}".
@@ -34,6 +40,7 @@ class StatisticsApi:
         self.app.router.add_post('/get_statistics', self.get_statistics)
 
     async def get_statistics(self, request):
+        log.info("get_statistics with parameters %s", request)
         data = await request.json()
 
         parameters = [data['flow_id'], int(data['max_length']),
@@ -42,10 +49,11 @@ class StatisticsApi:
         result = await self.loop.run_in_executor(ProcessPoolExecutor(),
                                                  self.s_m.get_statistics,
                                                  *parameters)
-
+        log.info("result of get_statistics %s", result)
         return web.json_response({'response': result})
 
     async def save_statistics(self, request):
+        log.info("save_statistics with parameters %s", request)
         data = await request.json()
 
         parameters = [data['src'], data['dst'], data['size'], data['time']]
@@ -59,21 +67,25 @@ class StatisticsApi:
                                                  parameters)
 
         # result =  self.s_m.save_statistics(parameters)
-
+        log.info("result of save_statistics %s", result)
         return web.json_response({'response': result})
 
     # Remember, you don't have parallelism (threads etc.), you have concurrency.
     # https://stackoverflow.com/questions/42279675/syncronous-sleep-into-asyncio-coroutine
     async def root(self, request):
+        log.info("root request")
         delay = random.randint(0, 1)
+        log.info("delay %s", delay)
         # Executor is the solution for multi-processing with corrutines
         # https://stackoverflow.com/questions/43241221/how-can-i-wrap-a-synchronous-function-in-an-async-coroutine/43263397
 
         result = await self.loop.run_in_executor(ProcessPoolExecutor(),
                                                  self.s_m.delay_method, delay)
+        log.info("root finish")
         return web.json_response({'response': 'dummy_data', 'delay': result})
 
     def run(self, port):
+        log.info("Running api")
         web.run_app(self.app, port=port)
 
     def get_app(self):
