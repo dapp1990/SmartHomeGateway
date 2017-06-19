@@ -1,4 +1,4 @@
-from .interface_manager import InterfaceStatistics
+from statistics_module.interface_manager import InterfaceStatistics
 from tinydb import TinyDB
 from tinydb import Query
 from datetime import datetime
