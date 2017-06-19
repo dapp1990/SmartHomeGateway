@@ -8,12 +8,12 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from datetime import datetime
 from ryu.lib import hub
-from flow_module.outgoing_flow_scheduler import OutgoingFlowScheduler
+from flow_module.flow_monitor import FlowMonitor
 import requests
 import json
 
 
-# why _packet_in_handler is already asyncronous
+# reason _packet_in_handler is already asyncronous
 # https://thenewstack.io/sdn-series-part-iv-ryu-a-rich
 
 
@@ -22,14 +22,9 @@ class FlowController(app_manager.RyuApp):
 
     def __init__(self, *args, **kwargs):
         super(FlowController, self).__init__(*args, **kwargs)
-        self.policy_url = "http://localhost:5002"
+
         self.statistics_url = "http://localhost:5001"
-        self.outgoing_flows = {}
-        self.bandwidths = {}
-        self.local_port = 2#4294967294
-
-        self.monitor_thread = hub.spawn(self._flow_monitor)
-
+        self.monitor = FlowMonitor()
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -90,18 +85,9 @@ class FlowController(app_manager.RyuApp):
         self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
         """ End debug"""
 
-        if id_flow not in self.outgoing_flows:
-            # FIXME: be sure that this syncronous call is working correctly
-            # with the asyn method packet_in
-            response = await self.get_bandwidth(id_flow)
-            self.set_bandwidth(id_flow, int(response['response']))
+        parameters = [id_flow, ev.msg.total_len, datapath, in_port, msg, parser]
 
-        self.set_outgoing_scheduler(id_flow,
-                                    ev.msg.total_len,
-                                    datapath,
-                                    in_port,
-                                    msg,
-                                    parser)
+        self.monitor.process_message(*parameters)
 
         #FIXME: create a new asyn queue to handle the saving statistics request
         await self.save_statistics(dst, ev, src)
@@ -115,39 +101,3 @@ class FlowController(app_manager.RyuApp):
         res = requests.post(self.statistics_url + "/save_statistics",
                             json=data,
                             headers={'Content-type': 'application/json'})
-
-    async def get_bandwidth(self, id_flow):
-        data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
-        res = requests.post(self.policy_url + "/get_bandwidth",
-                            json=json.dumps(data),
-                            headers={'Content-type': 'application/json'})
-        response = res.json()
-        return response
-
-    def set_bandwidth(self,id_flow, bandwidth):
-        self.outgoing_flows[id_flow] = bandwidth
-        self.outgoing_flows[id_flow] = OutgoingFlowScheduler(bandwidth)
-
-    def set_outgoing_scheduler(self, id_flow, msg_len, datapath, in_port,
-                               msg, parser):
-        if in_port == 1:
-            # Send out to local port which is connected with the Linux Kernel
-            out_port = self.local_port
-        else:
-            out_port = 1
-
-        # Create the out paket format to be sent out
-        actions = [parser.OFPActionOutput(out_port)]
-        out_format = parser.OFPPacketOut(datapath=datapath,
-                                         buffer_id=msg.buffer_id,
-                                         in_port=in_port,
-                                         actions=actions,
-                                         data=msg.data)
-
-        self.outgoing_flows[id_flow].add_flow(msg_len, datapath, out_format)
-
-    def _monitor(self):
-        while True:
-            for dp in self.datapaths.values():
-                self._request_stats(dp)
-            hub.sleep(10)
