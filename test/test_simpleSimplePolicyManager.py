@@ -4,7 +4,7 @@ import numpy as np
 
 
 class TestSimplePolicyManager(TestCase):
-    
+
     def test_simple_zero_update_bandwidth(self):
         reserved_bytes = (150 + 16) * 10
         simple_policy_manager = SimplePolicyManager(200000,reserved_bytes)
