@@ -1,5 +1,4 @@
-#from multiprocessing import Queue
-from Queue import Queue
+from queue import Queue
 from ryu.base import app_manager
 from threading import Thread
 import time
@@ -42,6 +41,8 @@ class FlowScheduler(app_manager.RyuApp):
         while True:
             msg_len, datapath, out_format = self.queue.get()
             now = time.time()
+            print("checkpoint: {}".format(self.time_checkpoint))
+            print("now: {}".format(now))
             new_tokens = ((now - self.time_checkpoint) * self.rate)
             self.time_checkpoint = now
             missing_tokens = msg_len - new_tokens

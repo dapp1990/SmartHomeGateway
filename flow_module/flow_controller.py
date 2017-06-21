@@ -10,8 +10,7 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from datetime import datetime
 from flow_module.flow_monitor import FlowMonitor
-#from multiprocessing import Queue
-from Queue import Queue
+from queue import Queue
 from threading import Thread
 import requests
 

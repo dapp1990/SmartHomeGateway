@@ -1,6 +1,5 @@
 from flow_module.flow_scheduler import FlowScheduler
-#from multiprocessing import Queue
-from Queue import Queue
+from queue import Queue
 from threading import Thread
 import requests
 import json
