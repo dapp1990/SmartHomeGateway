@@ -1,4 +1,5 @@
-from multiprocessing import Queue
+#from multiprocessing import Queue
+from Queue import Queue
 from ryu.base import app_manager
 from threading import Thread
 import time
@@ -34,7 +35,7 @@ class FlowScheduler(app_manager.RyuApp):
             self.waiting_response = True
             self.monitor.process_burst(self.id_flow)
 
-        self.queue.put(msg_len, datapath, out_format)
+        self.queue.put((msg_len, datapath, out_format))
 
     def scheduler(self):
         while True:
@@ -46,8 +47,8 @@ class FlowScheduler(app_manager.RyuApp):
             missing_tokens = msg_len - new_tokens
 
             if missing_tokens > 0:
-                self.logger.info("waiting 1...")
+                print("waiting...")
                 time.sleep(missing_tokens / self.rate)  # rate here!
-                datapath.send_msg(out_format)
+            datapath.send_msg(out_format)
 
             self.queue.task_done()

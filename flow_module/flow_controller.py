@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
@@ -8,14 +10,15 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from datetime import datetime
 from flow_module.flow_monitor import FlowMonitor
-from multiprocessing import Queue
+#from multiprocessing import Queue
+from Queue import Queue
 from threading import Thread
 import requests
 
+# TODO: convert this module into a python packet
 
 # reason _packet_in_handler is already asyncronous
 # https://thenewstack.io/sdn-series-part-iv-ryu-a-rich
-
 
 class FlowController(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -23,13 +26,21 @@ class FlowController(app_manager.RyuApp):
     def __init__(self, *args, **kwargs):
         super(FlowController, self).__init__(*args, **kwargs)
 
+        self.logger.info("Initializing ryu app")
         self.statistics_url = "http://localhost:5001"
+
+        self.logger.info("Initializing FlowMonitor")
         self.monitor = FlowMonitor()
 
+        self.logger.info("Initializing Queues")
         self.statistics_queue = Queue()
-        self.statistics_thread = Thread(target=self.save_statistics)
+        self.statistics_thread = Thread(target=self.save_statistics,
+                                        args=(self.statistics_queue,))
+        self.logger.info("Starting daemon")
         self.statistics_thread.daemon = True
         self.statistics_thread.start()
+
+        self.logger.info("Finishing ryu app")
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -62,7 +73,7 @@ class FlowController(app_manager.RyuApp):
         datapath.send_msg(mod)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
-    async def _packet_in_handler(self, ev):
+    def _packet_in_handler(self, ev):
 
         msg = ev.msg
         pkt = packet.Packet(msg.data)
@@ -94,16 +105,18 @@ class FlowController(app_manager.RyuApp):
 
         self.monitor.process_message(*parameters)
 
-        self.statistics_queue.put(dst, ev, src)
+        # self.statistics_queue.put(dst, ev, src)
 
-    def save_statistics(self):
-        dst, ev, src = self.statistics_queue.get()
-        now_str = str(datetime.now())
-        data = {"src": src,
-                "dst": dst,
-                "size": ev.msg.total_len,
-                "time": now_str}
-        res = requests.post(self.statistics_url + "/save_statistics",
-                            json=data,
-                            headers={'Content-type': 'application/json'})
-        self.statistics_queue.task_done()
+    def save_statistics(self, q):
+        while True:
+            dst, ev, src = q.get()
+            self.logger.info("after getting somehting!")
+            now_str = str(datetime.now())
+            data = {"src": src,
+                    "dst": dst,
+                    "size": ev.msg.total_len,
+                    "time": now_str}
+            res = requests.post(self.statistics_url + "/save_statistics",
+                                json=data,
+                                headers={'Content-type': 'application/json'})
+            q.task_done()

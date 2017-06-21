@@ -1,8 +1,13 @@
+# sudo mn -- custom topology.py --topo
+
+
 # sudo ovs-ofctl add-flow s2 in_port=1,actions=2
 # sudo ovs-ofctl add-flow s2 in_port=2,actions=1
 # sudo ovs-vsctl set-controller s1 tcp:127.0.0.1
 
 """
+Add new node in the topology
+
 py net.addHost('h3')
 py net.addLink(s2, net.get('h3'))
 py s2.attach('s1-eth3')
@@ -41,6 +46,8 @@ def gatewayNet():
 
     info('*** Running CLI\n')
     CLI(net)
+
+
 
     info('*** Stopping network\n')
     net.stop()

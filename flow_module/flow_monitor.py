@@ -1,5 +1,6 @@
 from flow_module.flow_scheduler import FlowScheduler
-from multiprocessing import Queue
+#from multiprocessing import Queue
+from Queue import Queue
 from threading import Thread
 import requests
 import json
@@ -41,23 +42,26 @@ class FlowMonitor:
             [id_flow, msg_len, datapath, in_port, msg, parser])
 
     def send_burst_request(self):
-        id_flow = self.burst_queue.get()
+        while True:
+            id_flow = self.burst_queue.get()
 
-        self.update_bandwidths(id_flow)
+            self.update_bandwidths(id_flow)
 
-        self.burst_queue.task_done()
+            self.burst_queue.task_done()
 
     def send_message(self):
-        id_flow, msg_len, datapath, in_port, msg, parser = \
-            self.outgoing_queue.get()
+        while True:
+            id_flow, msg_len, datapath, in_port, msg, parser = \
+                self.outgoing_queue.get()
 
-        if id_flow not in self.outgoing_flows:
-            bandwidth = self.get_bandwidth(id_flow)
-            self.set_bandwidth(self,id_flow, bandwidth)
+            if id_flow not in self.outgoing_flows:
+                # bandwidth = self.get_bandwidth(id_flow)
+                bandwidth = 100000
+                self.set_bandwidth(id_flow, bandwidth)
 
-        self.set_outgoing_scheduler(id_flow, msg_len, datapath, in_port, msg,
-                                    parser)
-        self.outgoing_queue.task_done()
+            self.set_outgoing_scheduler(id_flow, msg_len, datapath, in_port, msg,
+                                        parser)
+            self.outgoing_queue.task_done()
 
     def get_bandwidth(self, id_flow):
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
