@@ -105,12 +105,11 @@ class FlowController(app_manager.RyuApp):
 
         self.monitor.process_message(*parameters)
 
-        # self.statistics_queue.put(dst, ev, src)
+        self.statistics_queue.put((dst, ev, src))
 
     def save_statistics(self, q):
         while True:
             dst, ev, src = q.get()
-            self.logger.info("after getting somehting!")
             now_str = str(datetime.now())
             data = {"src": src,
                     "dst": dst,

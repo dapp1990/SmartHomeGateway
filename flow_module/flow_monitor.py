@@ -55,8 +55,9 @@ class FlowMonitor:
                 self.outgoing_queue.get()
 
             if id_flow not in self.outgoing_flows:
-                # bandwidth = self.get_bandwidth(id_flow)
-                bandwidth = 100000
+                bandwidth = self.get_bandwidth(id_flow)
+                print("Setting bandwidht to {}".format(bandwidth))
+                # bandwidth = 100000
                 self.set_bandwidth(id_flow, bandwidth)
 
             self.set_outgoing_scheduler(id_flow, msg_len, datapath, in_port, msg,
@@ -72,6 +73,7 @@ class FlowMonitor:
         return float(data['response'])
 
     def update_bandwidths(self, id_flow):
+        print("update_bandwidths... ")
         # TODO[id:1]: maybe it is better to request the bandwidth of every flow
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
         res = requests.post(self.policy_url + "/update_bandwidths",
