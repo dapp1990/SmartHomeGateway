@@ -16,7 +16,7 @@ class FlowMonitor:
     def __init__(self):
         self.policy_url = "http://localhost:5002"
 
-        self.max_size = 100
+        self.max_size = 50
 
         self.outgoing_flows = {}
         self.bandwidths = {}
@@ -55,7 +55,7 @@ class FlowMonitor:
 
             if id_flow not in self.outgoing_flows:
                 bandwidth = self.get_bandwidth(id_flow)
-                print("Setting bandwidht to {}".format(bandwidth))
+                print("Setting bandwidth to {}".format(bandwidth))
                 # bandwidth = 100000
                 self.set_bandwidth(id_flow, bandwidth)
 

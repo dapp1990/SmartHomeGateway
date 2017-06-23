@@ -14,7 +14,7 @@ class PolicyApi:
     def __init__(self, policy_manager, url_statistics_server, time_lapse,
                  max_statistics, level=log.INFO):
 
-        log.basicConfig(filename='PolicyAPI.log',
+        log.basicConfig(#filename='PolicyAPI.log',
                         format='%(''asctime)s - %(levelname)s - %(message)s',
                         filemode='w',
                         level=level)
@@ -48,7 +48,7 @@ class PolicyApi:
         result = await self.loop.run_in_executor(ProcessPoolExecutor(),
                                                  self.p_m.get_bandwidth,
                                                  *parameters)
-        log.info("result of get_bandwidth: %s", result)
+        log.info("result of {} get_bandwidth: {}".format(parameters[0], result))
         return web.json_response({'response': result})
 
     async def update_bandwidths(self, request):

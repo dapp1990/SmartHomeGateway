@@ -16,7 +16,7 @@ class SimplePolicyManager(InterfacePolicy):
     """
 
     def __init__(self, max_capacity, reserved_bytes, level=log.INFO):
-        log.basicConfig(filename='SimplePolicyManager.log',
+        log.basicConfig(#filename='SimplePolicyManager.log',
                         format='%(''asctime)s - %(levelname)s - %(message)s',
                         filemode='w',
                         level=level)

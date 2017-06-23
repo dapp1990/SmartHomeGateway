@@ -18,7 +18,7 @@ class StatisticsApi:
 
     def __init__(self,statistics_manager, level=log.INFO):
 
-        log.basicConfig(filename='StatisticsApi.log',
+        log.basicConfig(#filename='StatisticsApi.log',
                         format='%(''asctime)s - %(levelname)s - %(message)s',
                         filemode='w',
                         level=level)
