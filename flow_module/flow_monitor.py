@@ -74,6 +74,7 @@ class FlowMonitor:
 
     def update_bandwidths(self, id_flow):
         print("update_bandwidths with id {}".format(id_flow))
+        print("content of bandwidths {}".format(id_flow))
         # TODO[id:1]: maybe it is better to request the bandwidth of every flow
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
         res = requests.post(self.policy_url + "/update_bandwidths",
@@ -90,7 +91,7 @@ class FlowMonitor:
     #TODO[id:1]: maybe it is better to request the bandwidth of every flow
     # scheduler and not make this cache here
     def set_bandwidth(self,id_flow, bandwidth):
-        self.outgoing_flows[id_flow] = bandwidth
+        self.bandwidths[id_flow] = bandwidth
         self.outgoing_flows[id_flow] = FlowScheduler(id_flow,
                                                      bandwidth,
                                                      self,
