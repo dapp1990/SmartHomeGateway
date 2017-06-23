@@ -6,7 +6,6 @@ from aiohttp import ClientSession
 from aiohttp import web
 import logging as log
 import asyncio
-import json
 
 
 class PolicyApi:

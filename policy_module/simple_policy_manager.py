@@ -63,7 +63,7 @@ class SimplePolicyManager(InterfacePolicy):
         is not changed.
 
         Args:
-            flow_current_bandwidth: bandwidth of the current flows without
+            flow_current_bandwidth: bandwidth of the current flows WITH
             flow_id.
             flow_statistics ([(str,[int])]): Statistics of the last active
             flows without flow_id.
