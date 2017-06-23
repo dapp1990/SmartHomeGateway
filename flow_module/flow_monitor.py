@@ -34,6 +34,7 @@ class FlowMonitor:
         self.burst_thread.start()
 
     def process_burst(self, id_flow):
+        print("received burst from {}".format(id_flow))
         self.burst_queue.put(id_flow)
 
     def process_message(self, id_flow, msg_len, datapath, in_port, msg, parser):
@@ -43,7 +44,7 @@ class FlowMonitor:
     def send_burst_request(self):
         while True:
             id_flow = self.burst_queue.get()
-
+            print("after dequeued {}".format(id_flow))
             self.update_bandwidths(id_flow)
 
             self.burst_queue.task_done()
@@ -72,7 +73,7 @@ class FlowMonitor:
         return float(data['response'])
 
     def update_bandwidths(self, id_flow):
-        print("update_bandwidths... ")
+        print("update_bandwidths with id {}".format(id_flow))
         # TODO[id:1]: maybe it is better to request the bandwidth of every flow
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
         res = requests.post(self.policy_url + "/update_bandwidths",

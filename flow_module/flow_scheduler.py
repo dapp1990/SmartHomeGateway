@@ -31,7 +31,7 @@ class FlowScheduler(app_manager.RyuApp):
 
     def add_flow(self, msg_len, datapath, out_format):
         if self.queue.qsize() > self.max_size and not self.waiting_response:
-            print("sending burst!...")
+            print("sending burst of {}".format(self.id_flow))
             self.waiting_response = True
             self.monitor.process_burst(self.id_flow)
 
@@ -41,16 +41,16 @@ class FlowScheduler(app_manager.RyuApp):
         while True:
             msg_len, datapath, out_format = self.queue.get()
             now = time.time()
-            print("checkpoint: {}".format(self.time_checkpoint))
-            print("now: {}".format(now))
+            #print("checkpoint: {}".format(self.time_checkpoint))
+            #print("now: {}".format(now))
             new_tokens = ((now - self.time_checkpoint) * self.rate)
             self.time_checkpoint = now
             missing_tokens = msg_len - new_tokens
-            print("rate {}".format(self.rate))
-            print("new_tokens {}".format(new_tokens))
-            print("missing_tokens {}".format(missing_tokens))
+            #print("rate {}".format(self.rate))
+            #print("new_tokens {}".format(new_tokens))
+            #print("missing_tokens {}".format(missing_tokens))
             if missing_tokens > 0:
-                print("waiting {}".format(missing_tokens / self.rate))
+                #print("waiting {}".format(missing_tokens / self.rate))
                 time.sleep(missing_tokens / self.rate)  # rate here!
 
             datapath.send_msg(out_format)
