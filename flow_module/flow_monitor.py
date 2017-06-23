@@ -66,7 +66,7 @@ class FlowMonitor:
     def get_bandwidth(self, id_flow):
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
         res = requests.post(self.policy_url + "/get_bandwidth",
-                            json=json.dumps(data),
+                            json=data,
                             headers={'Content-type': 'application/json'})
         data = res.json()
         return float(data['response'])
@@ -76,7 +76,7 @@ class FlowMonitor:
         # TODO[id:1]: maybe it is better to request the bandwidth of every flow
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
         res = requests.post(self.policy_url + "/update_bandwidths",
-                            json=json.dumps(data),
+                            json=data,
                             headers={'Content-type': 'application/json'})
         #TODO: what happen if response is not 2000
         if res.status_code == 200:

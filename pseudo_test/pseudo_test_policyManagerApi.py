@@ -12,7 +12,7 @@ BASE_URL = "http://localhost:5002/"
 
 # setUp
 # app = StatisticsApi(SimpleStatisticsManager("test_statistics"))
-flows = ['1.0','2.0','3.0','4.0','5.0','6.0','7.0','8.0','9.0']
+flows = ["1.0","2.0","3.0","4.0","5.0","6.0","7.0","8.0","9.0"]
 reserved_bytes = (150 + 16) * 10
 
 # test_simple_request
@@ -27,7 +27,7 @@ current_flows = {}
 
 for flow in flows:
     data = {'flow_id': flow, 'current_flows':current_flows}
-    res = requests.post(BASE_URL + "get_bandwidth", json=json.dumps(data),
+    res = requests.post(BASE_URL + "get_bandwidth", json=data,
                         headers={'Content-type': 'application/json'})
     assert res.status_code == 200
     data = res.json()
@@ -36,7 +36,7 @@ for flow in flows:
 assert sum(current_flows.values()) == reserved_bytes*9
 
 data = {'flow_id': '1.0', 'current_flows': current_flows}
-res = requests.post(BASE_URL + "update_bandwidths", json=json.dumps(data),
+res = requests.post(BASE_URL + "update_bandwidths", json=data,
                     headers={'Content-type': 'application/json'})
 assert res.status_code == 200
 data = res.json()

@@ -40,8 +40,7 @@ class PolicyApi:
 
     async def get_bandwidth(self, request):
         log.info("get_bandwidth with parameters %s",request)
-        json_str = await request.json()
-        data = json.loads(json_str)
+        data = await request.json()
 
         parameters = [data['flow_id'], data['current_flows']]
 
@@ -53,12 +52,11 @@ class PolicyApi:
 
     async def update_bandwidths(self, request):
         log.info("update_bandwidths with parameters %s", request)
-        json_str = await request.json()
-        data = json.loads(json_str)
+        data = await request.json()
 
         to_time = datetime.now()
         from_time = to_time - timedelta(seconds=self.time_lapse)
-
+        log.info("This is the requester {} ".format(data['flow_id']))
         statistics = {}
         async with ClientSession() as session:
             for flow_id in data['current_flows']:
