@@ -56,7 +56,7 @@ class StatisticsApi:
         log.info("save_statistics with parameters %s", request)
         data = await request.json()
 
-        parameters = [data['src'], data['dst'], data['size'], data['time']]
+        parameters = [data['id_flow'], data['size'], data['time']]
 
         # cache mechanism is impossible due to the ProcessPoolExecuter,
         # which is running in other process with other MEMORY, so the cache
