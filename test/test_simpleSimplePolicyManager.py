@@ -27,7 +27,7 @@ class TestSimplePolicyManager(TestCase):
 
         for i in range(1, 10):
             element = update_result[i]
-            self.assertEquals(element, 0)
+            assert (element < 1)
 
     def test_set_bandwidth_more_capacity_low_statistics(self):
         reserved_bytes = (150 + 16) * 10
