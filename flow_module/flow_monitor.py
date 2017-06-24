@@ -42,7 +42,7 @@ class FlowMonitor:
 
     def process_request(self):
         while True:
-            function, parameters = self.requests()
+            function, parameters = self.requests.get()
 
             function(*parameters)
 
