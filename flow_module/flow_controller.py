@@ -102,7 +102,8 @@ class FlowController(app_manager.RyuApp):
 
         parameters = [id_flow, ev.msg.total_len, datapath, in_port, msg, parser]
 
-        self.monitor.process_message(*parameters)
+        self.monitor.notification(self.monitor.outgoing_notification,
+                                  parameters)
 
         self.statistics_queue.put((dst, ev, src))
 
