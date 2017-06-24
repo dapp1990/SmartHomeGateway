@@ -127,7 +127,7 @@ class FlowMonitor:
     def set_bandwidth(self,id_flow, bandwidth):
         self.bandwidths[id_flow] = bandwidth
         if id_flow in self.outgoing_flows:
-            self.outgoing_flows[id_flow] = bandwidth
+            self.outgoing_flows[id_flow].set_rate(bandwidth)
         else:
             self.outgoing_flows[id_flow] = FlowScheduler(id_flow,
                                                          bandwidth,
