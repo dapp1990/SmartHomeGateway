@@ -23,7 +23,7 @@ assert data['response'] == "dummy_data"
 
 for i in range(100):
     now_str = str(datetime.now())
-    data = {"src": "192.168.10.90", "dst": "192.168.30.201", "size": 20000+i,
+    data = {"id_flow": "192.168.10.90192.168.30.201", "size": 20000+i,
             "time": now_str}
     res = requests.post(BASE_URL + "save_statistics", json=data,
                         headers={'Content-type': 'application/json'})

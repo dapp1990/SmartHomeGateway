@@ -21,18 +21,14 @@ class TestSimpleStatisticsManager(TestCase):
 
     def test_naive_retrieve_case(self):
 
-        results = self.simple_manager.save_statistics(['192.168.19.20',
-                                                       '192.168.19.77',
-                                                       '150',
-                                                       str(datetime.now())])
+        results = self.simple_manager.save_statistics(
+            ['192.168.19.20192.168.19.77','150',str(datetime.now())])
 
         self.assertEquals(results, True)
 
         for i in range(100):
-            results = self.simple_manager.save_statistics(['192.168.19.20',
-                                                           '192.168.19.77',
-                                                           '150',
-                                                           str(datetime.now())])
+            results = self.simple_manager.save_statistics(
+                ['192.168.19.20192.168.19.77', '150', str(datetime.now())])
 
         self.assertEquals(results, True)
 
@@ -47,9 +43,8 @@ class TestSimpleStatisticsManager(TestCase):
     def test_first_retrieve_case(self):
 
         for i in range(3):
-            self.simple_manager.save_statistics(['192.168.19.20',
-                                                 '192.168.19.77', '150',
-                                                 str(datetime.now())])
+            self.simple_manager.save_statistics(
+                ['192.168.19.20192.168.19.77', '150', str(datetime.now())])
 
         to_time = datetime.now()
         from_time = to_time - timedelta(seconds=2)
@@ -62,9 +57,8 @@ class TestSimpleStatisticsManager(TestCase):
     def test_second_retrieve_case(self):
 
         for i in range(100):
-            self.simple_manager.save_statistics(['192.168.19.20',
-                                                 '192.168.19.77', '150',
-                                                 str(datetime.now())])
+            self.simple_manager.save_statistics(
+                ['192.168.19.20192.168.19.77', '150', str(datetime.now())])
 
         to_time = datetime.now()
         from_time = to_time - timedelta(seconds=2)
@@ -77,15 +71,13 @@ class TestSimpleStatisticsManager(TestCase):
     def test_third_retrieve_case(self):
 
         for i in range(50):
-            self.simple_manager.save_statistics(['192.168.19.20',
-                                                 '192.168.19.77', i,
-                                                 str(datetime.now())])
+            self.simple_manager.save_statistics(
+                ['192.168.19.20192.168.19.77', i, str(datetime.now())])
         time.sleep(5)
 
         for i in range(50):
-            self.simple_manager.save_statistics(['192.168.19.20',
-                                                 '192.168.19.77', i+50,
-                                                 str(datetime.now())])
+            self.simple_manager.save_statistics(
+                ['192.168.19.20192.168.19.77', i+50, str(datetime.now())])
 
         to_time = datetime.now()
         from_time = to_time - timedelta(seconds=2)

@@ -13,9 +13,8 @@ class SimpleStatisticsManager(InterfaceStatistics):
 
     def save_statistics(self, statistics):
         db = TinyDB('{}'.format(self.db_name))
-        flow_id = statistics[0] + statistics[1]
-        db.insert({'flow_id': flow_id, 'size': statistics[2], 'time':
-                   statistics[3]})
+        db.insert({'flow_id': statistics[0], 'size': statistics[1], 'time':
+                   statistics[2]})
         db.close()
         return True
 
