@@ -49,7 +49,7 @@ class FlowMonitor:
             self.outgoing_queue.task_done()
 
     def outgoing_notification(self, id_flow, msg_len, datapath, in_port, msg,
-                         parser):
+                              parser):
 
         if id_flow not in self.outgoing_flows:
             bandwidth = self.get_bandwidth(id_flow)
@@ -68,6 +68,14 @@ class FlowMonitor:
         return float(data['response'])
 
     def bottleneck_notification(self, id_flow):
+        flow_dict = self.get_updates(id_flow)
+        for id_flow in flow_dict:
+            if flow_dict[id_flow] <= 0:
+                self.del_bandwidth(id_flow)
+            else:
+                self.set_bandwidth(self, id_flow, flow_dict[id_flow])
+
+    def get_updates(self, id_flow):
         print("update_bandwidths with id {}".format(id_flow))
         print("content of bandwidths {}".format(id_flow))
         # TODO[id:1]: maybe it is better to request the bandwidth of every flow
@@ -75,14 +83,26 @@ class FlowMonitor:
         res = requests.post(self.policy_url + "/update_bandwidths",
                             json=data,
                             headers={'Content-type': 'application/json'})
-        #TODO: what happen if response is not 2000
+        # TODO: what happen if response is not 2000
         if res.status_code == 200:
-            flow_dict = res.json()['response']
-            for id_flow in flow_dict:
-                if flow_dict[id_flow] <= 0:
-                    self.del_bandwidth(id_flow)
-                else:
-                    self.set_bandwidth(self, id_flow, flow_dict[id_flow])
+            return res.json()['response']
+        else:
+            self.logger.warning("Impossible to update bandwidths, "
+                                "status code { }".format(res.status_code))
+            return None
+
+    def get_bandwidth(self, id_flow):
+        data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
+        res = requests.post(self.policy_url + "/get_bandwidth",
+                            json=data,
+                            headers={'Content-type': 'application/json'})
+        if res.status_code == 200:
+            data = res.json()
+            return float(data['response'])
+        else:
+            self.logger.warning("Impossible to assing width, "
+                                "status code {}".format(res.status_code))
+            return -1
 
     def set_outgoing_scheduler(self, id_flow, msg_len, datapath, in_port,
                                msg, parser):
