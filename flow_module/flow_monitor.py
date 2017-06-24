@@ -23,7 +23,7 @@ class FlowMonitor:
     def __init__(self):
         self.policy_url = "http://localhost:5002"
 
-        self.max_size = 50
+        self.max_size = 10
 
         self.accept_update = True
         self.outgoing_flows = {}
@@ -37,7 +37,7 @@ class FlowMonitor:
         self.requests_thread.start()
 
     def notification(self, function, parameters):
-        print("Receive a notification {}".format(function))
+        #print("Receive a notification {}".format(function))
         self.requests.put((function, parameters))
 
     def process_request(self):
@@ -50,34 +50,30 @@ class FlowMonitor:
 
     def outgoing_notification(self, id_flow, msg_len, datapath, in_port, msg,
                               parser):
-
+        #print("outgoing notification with {}".format(self.outgoing_flows))
         if id_flow not in self.outgoing_flows:
             bandwidth = self.get_bandwidth(id_flow)
-            print("Setting bandwidth to {}".format(bandwidth))
-            # bandwidth = 100000
+            #print("Setting bandwidth to {}".format(bandwidth))
+            #bandwidth = 100000
             self.set_bandwidth(id_flow, bandwidth)
 
         self.set_outgoing_scheduler(id_flow, msg_len, datapath, in_port, msg,
                                     parser)
 
-        data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
-        res = requests.post(self.policy_url + "/get_bandwidth",
-                            json=data,
-                            headers={'Content-type': 'application/json'})
-        data = res.json()
-        return float(data['response'])
-
     def bottleneck_notification(self, id_flow):
+        print("before self.get_updates {}".format(self.outgoing_flows))
         flow_dict = self.get_updates(id_flow)
+        #FIXME: seems that even the receiver is delete!
         for id_flow in flow_dict:
             if flow_dict[id_flow] <= 0:
                 self.del_bandwidth(id_flow)
             else:
-                self.set_bandwidth(self, id_flow, flow_dict[id_flow])
+                self.set_bandwidth(id_flow, flow_dict[id_flow])
+        print("after self.get_updates {}".format(self.outgoing_flows))
 
     def get_updates(self, id_flow):
-        print("update_bandwidths with id {}".format(id_flow))
-        print("content of bandwidths {}".format(id_flow))
+        #print("update_bandwidths with id {}".format(id_flow))
+        #print("content of bandwidths {}".format(id_flow))
         # TODO[id:1]: maybe it is better to request the bandwidth of every flow
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
         res = requests.post(self.policy_url + "/update_bandwidths",
@@ -87,11 +83,12 @@ class FlowMonitor:
         if res.status_code == 200:
             return res.json()['response']
         else:
-            self.logger.warning("Impossible to update bandwidths, "
-                                "status code { }".format(res.status_code))
+            print("Impossible to update bandwidths, "
+                                "status code {}".format(res.status_code))
             return None
 
     def get_bandwidth(self, id_flow):
+        print("getting bandwidth {}".format(id_flow))
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
         res = requests.post(self.policy_url + "/get_bandwidth",
                             json=data,
@@ -100,7 +97,7 @@ class FlowMonitor:
             data = res.json()
             return float(data['response'])
         else:
-            self.logger.warning("Impossible to assing width, "
+            print("Impossible to assing width, "
                                 "status code {}".format(res.status_code))
             return -1
 

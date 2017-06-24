@@ -73,7 +73,7 @@ class FlowController(app_manager.RyuApp):
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
-
+	now_str = str(datetime.now())
         msg = ev.msg
         pkt = packet.Packet(msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
@@ -86,18 +86,19 @@ class FlowController(app_manager.RyuApp):
         if ev.msg.msg_len < ev.msg.total_len:
             self.logger.info("packet truncated!: only %s of %s bytes",
                              ev.msg.msg_len, ev.msg.total_len)
-
+	
         # Process message
         datapath = msg.datapath
         parser = datapath.ofproto_parser
         in_port = msg.match['in_port']
         dst = eth.dst
         src = eth.src
-        id_flow = str(eth.dst) + str(eth.src)
-
+        id_flow = str(eth.src) + str(eth.dst)
+	
+	self.statistics_queue.put((id_flow, ev.msg.total_len, now_str))
         """ Debug """
-        dpid = datapath.id
-        self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
+        #dpid = datapath.id
+        #self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
         """ End debug"""
 
         parameters = [id_flow, ev.msg.total_len, datapath, in_port, msg, parser]
@@ -105,16 +106,13 @@ class FlowController(app_manager.RyuApp):
         self.monitor.notification(self.monitor.outgoing_notification,
                                   parameters)
 
-        self.statistics_queue.put((dst, ev, src))
-
     def save_statistics(self, q):
         while True:
-            dst, ev, src = q.get()
+            src, dst, length, time = q.get()
             now_str = str(datetime.now())
-            data = {"src": src,
-                    "dst": dst,
-                    "size": ev.msg.total_len,
-                    "time": now_str}
+            data = {"id_flow": id_flow,
+                    "size": length,
+                    "time": time}
             res = requests.post(self.statistics_url + "/save_statistics",
                                 json=data,
                                 headers={'Content-type': 'application/json'})
