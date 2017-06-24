@@ -46,6 +46,10 @@ class SimplePolicyManager(InterfacePolicy):
                          flow_statistics):
         """Update the bandwidths of the given flows.
 
+        NOTE: Actually the constrain new_bandwidth < self.reserved_bytes then 0
+        is too restrictive. You must fin a better thread off with this
+        approach!
+
         Look over all the given flows and their statistics. Find inactive
         flows. Assign a bandwidth of zero to inactive flows and reduce the
         capacity of the flows if its current bandwidth is greater than the
@@ -82,9 +86,12 @@ class SimplePolicyManager(InterfacePolicy):
             else:
                 new_bandwidth = 0
 
-            if new_bandwidth < self.reserved_bytes:
-                reassigned_flow_bandwidth[f_id] = 0
-            elif new_bandwidth < flow_current_bandwidth[f_id]:
+            #if new_bandwidth < self.reserved_bytes:
+                #reassigned_flow_bandwidth[f_id] = 0
+            # TODO: Even wheter here I can update all the bandwidths according
+            # with
+            # the global view !
+            if new_bandwidth < flow_current_bandwidth[f_id]:
                 reassigned_flow_bandwidth[f_id] = new_bandwidth
             else:
                 reassigned_flow_bandwidth[f_id] = flow_current_bandwidth[f_id]
