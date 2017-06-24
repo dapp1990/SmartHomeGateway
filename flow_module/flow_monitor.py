@@ -46,7 +46,7 @@ class FlowMonitor:
 
             function(*parameters)
 
-            self.outgoing_queue.task_done()
+            self.requests.task_done()
 
     def outgoing_notification(self, id_flow, msg_len, datapath, in_port, msg,
                               parser):
