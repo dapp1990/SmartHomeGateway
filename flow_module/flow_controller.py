@@ -73,7 +73,7 @@ class FlowController(app_manager.RyuApp):
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
-	now_str = str(datetime.now())
+        now_str = str(datetime.now())
         msg = ev.msg
         pkt = packet.Packet(msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
@@ -94,8 +94,8 @@ class FlowController(app_manager.RyuApp):
         dst = eth.dst
         src = eth.src
         id_flow = str(eth.src) + str(eth.dst)
-	
-	self.statistics_queue.put((id_flow, ev.msg.total_len, now_str))
+
+        self.statistics_queue.put((id_flow, ev.msg.total_len, now_str))
         """ Debug """
         #dpid = datapath.id
         #self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
@@ -108,7 +108,7 @@ class FlowController(app_manager.RyuApp):
 
     def save_statistics(self, q):
         while True:
-            src, dst, length, time = q.get()
+            id_flow, length, time = q.get()
             now_str = str(datetime.now())
             data = {"id_flow": id_flow,
                     "size": length,
