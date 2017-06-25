@@ -65,7 +65,8 @@ class FlowMonitor:
         flow_dict = self.get_updates(id_flow)
         #FIXME: seems that even the receiver is delete!
         for id_flow in flow_dict:
-            if flow_dict[id_flow] <= 0:
+            #TODO: maybe it is better to make it variable
+            if flow_dict[id_flow] <= 20:
                 self.del_bandwidth(id_flow)
             else:
                 self.set_bandwidth(id_flow, flow_dict[id_flow])
@@ -134,5 +135,8 @@ class FlowMonitor:
     def del_bandwidth(self,id_flow):
         #TODO: be sure that the flow_scheduler is really dead, that a thread
         # is not just appearing.
-        del self.bandwidths[id_flow]
+        # FIXME: if you set to zero only, it will be like that for ever!!!
+        # it must be prunning somehow. Solution is controlling update
+        # parameters
+        self.bandwidths[id_flow] = 0
         del self.outgoing_flows[id_flow]
