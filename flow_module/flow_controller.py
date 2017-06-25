@@ -33,11 +33,12 @@ class FlowController(app_manager.RyuApp):
 
         self.logger.info("Initializing Queues")
         self.statistics_queue = Queue()
-        self.statistics_thread = Thread(target=self.save_statistics,
+        for i in range(10):
+            self.statistics_thread = Thread(target=self.save_statistics,
                                         args=(self.statistics_queue,))
-        self.logger.info("Starting daemon")
-        self.statistics_thread.daemon = True
-        self.statistics_thread.start()
+            self.logger.info("Starting worker")
+            self.statistics_thread.daemon = True
+            self.statistics_thread.start()
 
         self.logger.info("Finishing ryu app")
 

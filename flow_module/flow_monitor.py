@@ -33,9 +33,9 @@ class FlowMonitor:
 
         self.requests = Queue()
 
-        requests_thread = Thread(target=self.process_request)
-        requests_thread.daemon = True
-        requests_thread.start()
+        self.requests_thread = Thread(target=self.process_request)
+        self.requests_thread.daemon = True
+        self.requests_thread.start()
 
     def notification(self, function, parameters):
         #print("Receive a notification {}".format(function))
