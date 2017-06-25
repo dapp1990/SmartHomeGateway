@@ -81,7 +81,7 @@ class MediumPolicyManager(InterfacePolicy):
             if flow_statistics[f_id]:
                 measurements_hat = \
                     savitzky_golay(np.array(flow_statistics[f_id]), 51, 3)
-                new_bandwidth = sum(measurements_hat)/time_lapse
+                new_bandwidth = sum(flow_statistics[f_id])/time_lapse
             else:
                 new_bandwidth = 0
 
