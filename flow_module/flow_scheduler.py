@@ -18,9 +18,10 @@ class FlowScheduler(app_manager.RyuApp):
 
         self.time_checkpoint = time.time()
         self.queue = Queue()
-        self.thread = Thread(target=self.scheduler)
-        self.thread.daemon = True
-        self.thread.start()
+        for i in range(10):
+            self.thread = Thread(target=self.scheduler)
+            self.thread.daemon = True
+            self.thread.start()
 
     def set_rate(self, rate):
         self.waiting_response = False

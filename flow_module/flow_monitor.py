@@ -32,10 +32,10 @@ class FlowMonitor:
         self.local_port = 2  # 4294967294
 
         self.requests = Queue()
-        for i in range(10):
-        	requests_thread = Thread(target=self.process_request)
-        	requests_thread.daemon = True
-        	requests_thread.start()
+
+        requests_thread = Thread(target=self.process_request)
+        requests_thread.daemon = True
+        requests_thread.start()
 
     def notification(self, function, parameters):
         #print("Receive a notification {}".format(function))
