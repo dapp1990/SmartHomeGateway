@@ -1,11 +1,14 @@
 from policy_module.interface_policy_manager import InterfacePolicy
 from policy_module.simple_policy_manager import SimplePolicyManager
+from policy_module.medium_policy_manager import MediumPolicyManager
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timedelta
 from aiohttp import ClientSession
 from aiohttp import web
 import logging as log
 import asyncio
+
+#FIXME: modify when you are using SimpleManager
 
 
 class PolicyApi:
@@ -68,7 +71,8 @@ class PolicyApi:
                                             json=j_data) as resp:
                         response = await resp.json()
                         statistics[flow_id] = response['response']
-        parameters = [data['flow_id'], data['current_flows'], statistics]
+        parameters = [data['flow_id'], data['current_flows'], statistics,
+                      self.time_lapse]
         result = await self.loop.run_in_executor(ProcessPoolExecutor(),
                                                  self.p_m.update_bandwidth,
                                                  *parameters)
@@ -92,6 +96,6 @@ class PolicyApi:
 
 if __name__ == '__main__':
     reserved_bytes = (150 + 16) * 10
-    policy_server = PolicyApi(SimplePolicyManager(200000, reserved_bytes),
-                              "http://0.0.0.0:5001/", 20, 50)
+    policy_server = PolicyApi(MediumPolicyManager(200000, reserved_bytes),
+                              "http://0.0.0.0:5001/", 1, 50)
     policy_server.run(5002)
