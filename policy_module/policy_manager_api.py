@@ -97,5 +97,5 @@ class PolicyApi:
 if __name__ == '__main__':
     reserved_bytes = (150 + 16) * 10
     policy_server = PolicyApi(MediumPolicyManager(200000, reserved_bytes),
-                              "http://0.0.0.0:5001/", 1, 50)
+                              "http://0.0.0.0:5001/", 1, 10000)
     policy_server.run(5002)

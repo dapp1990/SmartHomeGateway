@@ -93,7 +93,10 @@ class FlowController(app_manager.RyuApp):
         in_port = msg.match['in_port']
         dst = eth.dst
         src = eth.src
-        id_flow = str(eth.src) + str(eth.dst)
+        if in_port == 1:
+            id_flow = str(eth.src) + str(eth.dst) 
+        else:
+            id_flow = str(eth.dst) + str(eth.src)
 
         self.statistics_queue.put((id_flow, ev.msg.total_len, now_str))
         """ Debug """

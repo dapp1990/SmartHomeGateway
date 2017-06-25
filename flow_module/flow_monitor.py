@@ -32,9 +32,10 @@ class FlowMonitor:
         self.local_port = 2  # 4294967294
 
         self.requests = Queue()
-        self.requests_thread = Thread(target=self.process_request)
-        self.requests_thread.daemon = True
-        self.requests_thread.start()
+        for i in range(10):
+        	requests_thread = Thread(target=self.process_request)
+        	requests_thread.daemon = True
+        	requests_thread.start()
 
     def notification(self, function, parameters):
         #print("Receive a notification {}".format(function))
@@ -61,16 +62,19 @@ class FlowMonitor:
                                     parser)
 
     def bottleneck_notification(self, id_flow):
-        print("before self.get_updates {}".format(self.outgoing_flows))
+        if id_flow not in self.bandwidths:
+            return
+        print("before self.get_updates {}".format(self.bandwidths))
         flow_dict = self.get_updates(id_flow)
         #FIXME: seems that even the receiver is delete!
+        print("result of policy {}".format(flow_dict))
         for id_flow in flow_dict:
             #TODO: maybe it is better to make it variable
-            if flow_dict[id_flow] <= 20:
+            if flow_dict[id_flow] <= 5:
                 self.del_bandwidth(id_flow)
             else:
                 self.set_bandwidth(id_flow, flow_dict[id_flow])
-        print("after self.get_updates {}".format(self.outgoing_flows))
+        print("after self.get_updates {}".format(self.bandwidths))
 
     def get_updates(self, id_flow):
         #print("update_bandwidths with id {}".format(id_flow))
@@ -138,5 +142,7 @@ class FlowMonitor:
         # FIXME: if you set to zero only, it will be like that for ever!!!
         # it must be prunning somehow. Solution is controlling update
         # parameters
-        self.bandwidths[id_flow] = 0
+        del self.bandwidths[id_flow]
         del self.outgoing_flows[id_flow]
+        print("after deliting bandwidths {}".format(self.bandwidths))
+        print("after deliting outgoiing {}".format(self.outgoing_flows))
