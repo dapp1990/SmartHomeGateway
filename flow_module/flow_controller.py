@@ -25,7 +25,6 @@ from aiohttp import ClientSession
 
 class FlowController(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
-    asyncio.Queue()
 
     def __init__(self, *args, **kwargs):
         super(FlowController, self).__init__(*args, **kwargs)
