@@ -35,4 +35,3 @@ class SimpleStatisticsManager(InterfaceStatistics):
             return result[size-max_stat:]
         else:
             return result
-ss
