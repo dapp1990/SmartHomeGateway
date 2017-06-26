@@ -59,7 +59,7 @@ class FlowMonitor:
             #print("Setting bandwidth to {}".format(bandwidth))
             #bandwidth = 100000
             self.set_bandwidth(id_flow, bandwidth)
-            self.cache[id_flow] = (time, None, [])
+            self.cache[id_flow] = [time, None, []]
             #append
         self.cache[id_flow][1] = time
         self.cache[id_flow][2].append(msg_len)
