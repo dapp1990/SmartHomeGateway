@@ -22,6 +22,8 @@ from aiohttp import ClientSession
 # reason _packet_in_handler is already asyncronous
 # https://thenewstack.io/sdn-series-part-iv-ryu-a-rich
 
+loop = asyncio.get_event_loop()
+loop.run_forever()
 
 class FlowController(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -37,8 +39,6 @@ class FlowController(app_manager.RyuApp):
 
         self.logger.info("Initializing Queues")
         #self.statistics_queue = asyncio.Queue()
-        self.loop = asyncio.get_event_loop()
-        self.loop.run_forever()
 
         #self.statistics_queue = Queue()
 
