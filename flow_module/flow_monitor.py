@@ -28,6 +28,7 @@ class FlowMonitor:
         self.accept_update = True
         self.outgoing_flows = {}
         self.bandwidths = {}
+        self.cache = {}
 
         self.local_port = 2  # 4294967294
 
