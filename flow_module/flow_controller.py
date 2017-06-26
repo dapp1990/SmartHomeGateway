@@ -113,9 +113,12 @@ class FlowController(app_manager.RyuApp):
 
         #self.statistics_queue.put((id_flow, ev.msg.total_len, now_str))
 
-        data = {'id_flow': id_flow,
-                'size': ev.msg.total_len,
-                'time': now_str}
+        #data = {'id_flow': id_flow,
+        #        'size': ev.msg.total_len,
+        #        'time': now_str}
+        now_str = str(datetime.now())
+        data = {"id_flow": "192.168.10.90192.168.30.201", "size": 20000,
+                "time": now_str}
         res = requests.post(self.statistics_url + "/save_statistics",
                             json=data,
                             headers={'Content-type': 'application/json'})
