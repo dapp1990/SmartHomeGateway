@@ -12,13 +12,15 @@ class SimpleStatisticsManager(InterfaceStatistics):
         self.db_name = database_name
 
     def save_statistics(self, statistics):
-        db = TinyDB('{}'.format(self.db_name))
-        db.insert({'flow_id': statistics[0], 'size': statistics[1], 'time':
-                   statistics[2]})
-        db.close()
+        #db = TinyDB('{}'.format(self.db_name))
+        #db.insert({'flow_id': statistics[0], 'size': statistics[1], 'time':
+        #           statistics[2]})
+        #db.close()
         return True
 
     def get_statistics(self, flow_id, max_stat, time_from_str, time_to_str):
+        return []
+        """
         db = TinyDB('{}'.format(self.db_name))
         query = db.search(Query().flow_id == flow_id)
         db.close()
@@ -36,3 +38,4 @@ class SimpleStatisticsManager(InterfaceStatistics):
             return result[size-max_stat:]
         else:
             return result
+        """

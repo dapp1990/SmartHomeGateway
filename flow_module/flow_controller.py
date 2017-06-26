@@ -14,16 +14,11 @@ from queue import Queue
 from threading import Thread
 import requests
 
-import asyncio
-from aiohttp import ClientSession
 
 # TODO: convert this module into a python packet
 
 # reason _packet_in_handler is already asyncronous
 # https://thenewstack.io/sdn-series-part-iv-ryu-a-rich
-
-loop = asyncio.get_event_loop()
-loop.run_forever()
 
 class FlowController(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -38,17 +33,15 @@ class FlowController(app_manager.RyuApp):
         self.monitor = FlowMonitor()
 
         self.logger.info("Initializing Queues")
-        #self.statistics_queue = asyncio.Queue()
+        self.statistics_queue = Queue()
+        for i in range(10):
+            self.statistics_thread = Thread(target=self.save_statistics,
+                                            args=(self.statistics_queue,))
+            self.logger.info("Starting worker")
+            self.statistics_thread.daemon = True
+            self.statistics_thread.start()
 
-        #self.statistics_queue = Queue()
-
-        #self.statistics_thread = Thread(target=self.save_statistics,
-        #                                args=(self.statistics_queue,))
-        #self.logger.info("Starting worker")
-        #self.statistics_thread.daemon = True
-        #self.statistics_thread.start()
-
-        #self.logger.info("Finishing ryu app")
+        self.logger.info("Finishing ryu app")
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -95,7 +88,7 @@ class FlowController(app_manager.RyuApp):
         if ev.msg.msg_len < ev.msg.total_len:
             self.logger.info("packet truncated!: only %s of %s bytes",
                              ev.msg.msg_len, ev.msg.total_len)
-	
+
         # Process message
         datapath = msg.datapath
         parser = datapath.ofproto_parser
@@ -103,14 +96,14 @@ class FlowController(app_manager.RyuApp):
         dst = eth.dst
         src = eth.src
         if in_port == 1:
-            id_flow = str(eth.src) + str(eth.dst) 
+            id_flow = str(eth.src) + str(eth.dst)
         else:
             id_flow = str(eth.dst) + str(eth.src)
 
-        #self.statistics_queue.put()
+        self.statistics_queue.put((id_flow, ev.msg.total_len, now_str))
         """ Debug """
-        #dpid = datapath.id
-        #self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
+        # dpid = datapath.id
+        # self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
         """ End debug"""
 
         parameters = [id_flow, ev.msg.total_len, datapath, in_port, msg, parser]
@@ -118,24 +111,14 @@ class FlowController(app_manager.RyuApp):
         self.monitor.notification(self.monitor.outgoing_notification,
                                   parameters)
 
-        future = asyncio.ensure_future(self.save_data(id_flow,
-                                                      ev.msg.total_len,
-                                                      now_str))
-
-    async def fetch(self, url, session, data):
-        async with session.post(url,data) as response:
-            return await response.read()
-
-    async def save_data(self, id_flow, length, time):
-
-        data = {"id_flow": id_flow,
-                "size": length,
-                "time": time}
-
-        # Fetch all responses within one Client session,
-        # keep connection alive for all requests.
-        async with ClientSession() as session:
-            task = asyncio.ensure_future(self.fetch(
-                self.statistics_url + "/save_statistics",
-                session,
-                data))
+    def save_statistics(self, q):
+        while True:
+            id_flow, length, time = q.get()
+            now_str = str(datetime.now())
+            data = {"id_flow": id_flow,
+                    "size": length,
+                    "time": time}
+            res = requests.post(self.statistics_url + "/save_statistics",
+                                json=data,
+                                headers={'Content-type': 'application/json'})
+            q.task_done()
