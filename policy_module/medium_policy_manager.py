@@ -2,6 +2,8 @@ from .interface_policy_manager import InterfacePolicy
 import logging as log
 import numpy as np
 from .util import savitzky_golay
+import datetime
+
 
 # TODO: Make unittest
 
@@ -42,7 +44,7 @@ class MediumPolicyManager(InterfacePolicy):
 
     # Todo: add hard constrains (max and min bandwidth rate)
     def update_bandwidth(self, flow_id, flow_current_bandwidth,
-                         flow_statistics, time_lapse):
+                         flow_statistics, time_str):
         """Update the bandwidths of the given flows.
 
         NOTE: Actually the constrain new_bandwidth < self.reserved_bytes then 0
@@ -76,20 +78,23 @@ class MediumPolicyManager(InterfacePolicy):
         reassigned_flow_bandwidth = {}
 
         for f_id in flow_statistics:
-            # Smooth dataset using Savitzky-Golay filter to avoid peak in
-            # the bandwidth estimation
-            if flow_statistics[f_id]:
-                measurements_hat = \
-                    savitzky_golay(np.array(flow_statistics[f_id]), 51, 3)
-                new_bandwidth = sum(flow_statistics[f_id])/time_lapse
+
+            initial = datetime.strptime(flow_statistics[f_id][0], '%Y-%m-%d '
+                                                          '%H:%M:%S.%f')
+            final = datetime.strptime(flow_statistics[f_id][1], '%Y-%m-%d '
+                                                                '%H:%M:%S.%f')
+            request_time = datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S.%f')
+
+            delta_time = request_time - final
+            if delta_time.total_seconds() < 5:
+                total_delta = final - initial
+                new_bandwidth = sum(flow_statistics[f_id][
+                                        2])/total_delta.total_seconds()
             else:
                 new_bandwidth = 0
 
-            #if new_bandwidth < self.reserved_bytes:
-                #reassigned_flow_bandwidth[f_id] = 0
-            # TODO: Even wheter here I can update all the bandwidths according
-            # with
-            # the global view !
+            #FIXME for sure we need anothe good method to assign bandwidth
+
             if new_bandwidth < flow_current_bandwidth[f_id]:
                 reassigned_flow_bandwidth[f_id] = new_bandwidth
             else:

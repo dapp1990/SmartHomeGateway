@@ -59,20 +59,24 @@ class PolicyApi:
         to_time = datetime.now()
         from_time = to_time - timedelta(seconds=self.time_lapse)
         log.info("This is the requester {} ".format(data['flow_id']))
-        statistics = {}
-        async with ClientSession() as session:
-            for flow_id in data['current_flows']:
-                if data['flow_id'] is not flow_id:
-                    j_data = {'flow_id': flow_id,
-                              'max_length': self.max_statistics,
-                              'from_time': str(from_time),
-                              'to_time': str(to_time)}
-                    async with session.post(self.uss+"get_statistics",
-                                            json=j_data) as resp:
-                        response = await resp.json()
-                        statistics[flow_id] = response['response']
-        parameters = [data['flow_id'], data['current_flows'], statistics,
-                      self.time_lapse]
+
+        #FIXME time request!!!!
+        if not data['cache']:
+            statistics = {}
+            async with ClientSession() as session:
+                for flow_id in data['current_flows']:
+                    if flow_id not in statistics \
+                            and data['flow_id'] is not flow_id:
+                        j_data = {'flow_id': flow_id,
+                                  'max_length': self.max_statistics,
+                                  'from_time': str(from_time),
+                                  'to_time': str(to_time)}
+                        async with session.post(self.uss+"get_statistics",
+                                                json=j_data) as resp:
+                            response = await resp.json()
+                            statistics[flow_id] = response['response']
+        parameters = [data['flow_id'], data['current_flows'], data['cache'],
+                      data['time_request']]
         result = await self.loop.run_in_executor(ProcessPoolExecutor(),
                                                  self.p_m.update_bandwidth,
                                                  *parameters)

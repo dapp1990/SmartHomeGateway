@@ -33,10 +33,11 @@ class FlowMonitor:
         self.local_port = 2  # 4294967294
 
         self.requests = Queue()
-
-        self.requests_thread = Thread(target=self.process_request)
-        self.requests_thread.daemon = True
-        self.requests_thread.start()
+        num_threads = 20
+        for i in range(num_threads):
+            requests_thread = Thread(target=self.process_request)
+            requests_thread.daemon = True
+            requests_thread.start()
 
     def notification(self, function, parameters):
         #print("Receive a notification {}".format(function))
@@ -51,22 +52,26 @@ class FlowMonitor:
             self.requests.task_done()
 
     def outgoing_notification(self, id_flow, msg_len, datapath, in_port, msg,
-                              parser):
+                              parser,time):
         #print("outgoing notification with {}".format(self.outgoing_flows))
         if id_flow not in self.outgoing_flows:
             bandwidth = self.get_bandwidth(id_flow)
             #print("Setting bandwidth to {}".format(bandwidth))
             #bandwidth = 100000
             self.set_bandwidth(id_flow, bandwidth)
+            self.cache[id_flow] = (time, None, [])
+            #append
+        self.cache[id_flow][1] = time
+        self.cache[id_flow][2].append(msg_len)
 
         self.set_outgoing_scheduler(id_flow, msg_len, datapath, in_port, msg,
                                     parser)
 
-    def bottleneck_notification(self, id_flow):
+    def bottleneck_notification(self, id_flow, request_time):
         if id_flow not in self.bandwidths:
             return
         print("before self.get_updates {}".format(self.bandwidths))
-        flow_dict = self.get_updates(id_flow)
+        flow_dict = self.get_updates(id_flow, request_time)
         #FIXME: seems that even the receiver is delete!
         print("result of policy {}".format(flow_dict))
         for id_flow in flow_dict:
@@ -77,11 +82,12 @@ class FlowMonitor:
                 self.set_bandwidth(id_flow, flow_dict[id_flow])
         print("after self.get_updates {}".format(self.bandwidths))
 
-    def get_updates(self, id_flow):
+    def get_updates(self, id_flow, request_time):
         #print("update_bandwidths with id {}".format(id_flow))
         #print("content of bandwidths {}".format(id_flow))
         # TODO[id:1]: maybe it is better to request the bandwidth of every flow
-        data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
+        data = {'flow_id': id_flow, 'current_flows': self.bandwidths,
+                'cache': self.cache, 'request_time': request_time}
         res = requests.post(self.policy_url + "/update_bandwidths",
                             json=data,
                             headers={'Content-type': 'application/json'})

@@ -100,21 +100,29 @@ class FlowController(app_manager.RyuApp):
         else:
             id_flow = str(eth.dst) + str(eth.src)
 
-        self.statistics_queue.put((id_flow, ev.msg.total_len, now_str))
         """ Debug """
-        # dpid = datapath.id
-        # self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
+        dpid = datapath.id
+        self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
         """ End debug"""
 
-        parameters = [id_flow, ev.msg.total_len, datapath, in_port, msg, parser]
+        parameters = [id_flow, ev.msg.total_len, datapath, in_port, msg,
+                      parser, now_str]
 
         self.monitor.notification(self.monitor.outgoing_notification,
                                   parameters)
 
+        #self.statistics_queue.put((id_flow, ev.msg.total_len, now_str))
+
+        data = {"id_flow": id_flow,
+                "size": ev.msg.total_len,
+                "time": now_str}
+        res = requests.post(self.statistics_url + "/save_statistics",
+                            json=data,
+                            headers={'Content-type': 'application/json'})
+
     def save_statistics(self, q):
         while True:
             id_flow, length, time = q.get()
-            now_str = str(datetime.now())
             data = {"id_flow": id_flow,
                     "size": length,
                     "time": time}
