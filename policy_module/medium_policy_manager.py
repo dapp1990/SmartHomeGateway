@@ -2,7 +2,7 @@ from .interface_policy_manager import InterfacePolicy
 import logging as log
 import numpy as np
 from .util import savitzky_golay
-import datetime
+from datetime import datetime
 
 
 # TODO: Make unittest
@@ -86,8 +86,10 @@ class MediumPolicyManager(InterfacePolicy):
             request_time = datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S.%f')
 
             delta_time = request_time - final
-            if delta_time.total_seconds() < 5:
-                total_delta = final - initial
+            total_delta = final - initial
+            # TODO: must be a clever way to fix this
+            if delta_time.total_seconds() < 5 and 0 < total_delta.total_seconds() :
+                
                 new_bandwidth = sum(flow_statistics[f_id][
                                         2])/total_delta.total_seconds()
             else:

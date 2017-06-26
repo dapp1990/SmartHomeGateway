@@ -33,7 +33,7 @@ class FlowMonitor:
         self.local_port = 2  # 4294967294
 
         self.requests = Queue()
-        num_threads = 20
+        num_threads = 50
         for i in range(num_threads):
             requests_thread = Thread(target=self.process_request)
             requests_thread.daemon = True
@@ -41,12 +41,16 @@ class FlowMonitor:
 
     def notification(self, function, parameters):
         #print("Receive a notification {}".format(function))
+        if function ==  self.bottleneck_notification and not self.accept_update:
+            return
+        if function ==  self.bottleneck_notification:
+            self.accept_update = False
         self.requests.put((function, parameters))
 
     def process_request(self):
         while True:
             function, parameters = self.requests.get()
-
+	
             function(*parameters)
 
             self.requests.task_done()
@@ -68,8 +72,8 @@ class FlowMonitor:
                                     parser)
 
     def bottleneck_notification(self, id_flow, request_time):
-        if id_flow not in self.bandwidths:
-            return
+        #if id_flow not in self.bandwidths:
+        #    return
         print("before self.get_updates {}".format(self.bandwidths))
         flow_dict = self.get_updates(id_flow, request_time)
         #FIXME: seems that even the receiver is delete!
@@ -80,6 +84,7 @@ class FlowMonitor:
                 self.del_bandwidth(id_flow)
             else:
                 self.set_bandwidth(id_flow, flow_dict[id_flow])
+        self.accept_update = True
         print("after self.get_updates {}".format(self.bandwidths))
 
     def get_updates(self, id_flow, request_time):
@@ -87,7 +92,7 @@ class FlowMonitor:
         #print("content of bandwidths {}".format(id_flow))
         # TODO[id:1]: maybe it is better to request the bandwidth of every flow
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths,
-                'cache': self.cache, 'request_time': request_time}
+                'cache': self.cache, 'time_request': request_time}
         res = requests.post(self.policy_url + "/update_bandwidths",
                             json=data,
                             headers={'Content-type': 'application/json'})
@@ -151,5 +156,6 @@ class FlowMonitor:
         # parameters
         del self.bandwidths[id_flow]
         del self.outgoing_flows[id_flow]
+        del self.cache[id_flow]
         print("after deliting bandwidths {}".format(self.bandwidths))
         print("after deliting outgoiing {}".format(self.outgoing_flows))

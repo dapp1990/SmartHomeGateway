@@ -2,7 +2,7 @@ from queue import Queue
 from ryu.base import app_manager
 from threading import Thread
 import time
-import datetime
+from datetime import datetime
 
 class FlowScheduler(app_manager.RyuApp):
 

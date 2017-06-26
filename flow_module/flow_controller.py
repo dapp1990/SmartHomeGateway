@@ -95,10 +95,11 @@ class FlowController(app_manager.RyuApp):
         in_port = msg.match['in_port']
         dst = eth.dst
         src = eth.src
-        if in_port == 1:
-            id_flow = str(eth.src) + str(eth.dst)
-        else:
-            id_flow = str(eth.dst) + str(eth.src)
+        id_flow = str(eth.src) + str(eth.dst)
+        #if in_port == 1:
+        #    id_flow = str(eth.src) + str(eth.dst)
+        #else:
+        #    id_flow = str(eth.dst) + str(eth.src)
 
         """ Debug """
         dpid = datapath.id
@@ -116,12 +117,15 @@ class FlowController(app_manager.RyuApp):
         #data = {'id_flow': id_flow,
         #        'size': ev.msg.total_len,
         #        'time': now_str}
+        # FIXME: save statistics
+        """
         now_str = str(datetime.now())
         data = {"id_flow": "192.168.10.90192.168.30.201", "size": 20000,
                 "time": now_str}
         res = requests.post(self.statistics_url + "/save_statistics",
                             json=data,
                             headers={'Content-type': 'application/json'})
+        """
 
     def save_statistics(self, q):
         while True:
