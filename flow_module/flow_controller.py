@@ -99,8 +99,8 @@ class FlowController(app_manager.RyuApp):
         #    id_flow = str(eth.dst) + str(eth.src)
 
         """ Debug """
-        dpid = datapath.id
-        self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
+        #dpid = datapath.id
+        #self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
         """ End debug"""
 
         parameters = [id_flow, ev.msg.total_len, datapath, in_port, msg,

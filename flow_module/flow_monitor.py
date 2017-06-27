@@ -72,7 +72,7 @@ class FlowMonitor:
 
         self.set_outgoing_scheduler(id_flow, msg_len, datapath, in_port, msg,
                                     parser)
-        #self.save_statistics(id_flow, msg_len, time)
+        self.save_statistics(id_flow, msg_len, time)
 
     def bottleneck_notification(self, id_flow, request_time):
         #if id_flow not in self.bandwidths:
@@ -162,7 +162,15 @@ class FlowMonitor:
         #loop.run_until_complete(future)
         print("FINISH deleting bandwdth->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
-    def save_statistics(self, id_flow, temp):
+    def save_statistics(self, id_flow, length, time):
+        data = {"id_flow": id_flow,
+                "size": length,
+                "time": time}
+        url = self.statistics_url + "/save_statistics"
+        res = requests.post(url,
+                            json=data,
+                            headers={'Content-type': 'application/json'})
+        """
         for length,time in temp:
             data = {"id_flow": id_flow,
                     "size": length,
@@ -171,3 +179,4 @@ class FlowMonitor:
             res = requests.post(url,
                                 json=data,
                                 headers={'Content-type': 'application/json'})
+        """
