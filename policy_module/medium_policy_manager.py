@@ -73,10 +73,11 @@ class MediumPolicyManager(InterfacePolicy):
         """
 
         reassigned_flow_bandwidth = {}
-
+        temp_current = flow_current_bandwidth
         temp = {}
         total_bandwidth = 0
         for f_id in flow_statistics:
+            del temp_current[f_id]
 
             initial = datetime.strptime(flow_statistics[f_id][0], '%Y-%m-%d '
                                                                   '%H:%M:%S.%f')
@@ -105,12 +106,13 @@ class MediumPolicyManager(InterfacePolicy):
 
         current_capacity = sum(reassigned_flow_bandwidth.values())
 
-        # Todo: new a log to see if there is any warning here!
-
         if self.max_capacity+self.reserved_bytes < current_capacity:
             log.warning("Capacity overflow max+reserved %s - assigned capacity "
                         "%s",
                         self.max_capacity + self.reserved_bytes,
                         current_capacity)
+
+        for id_flow in temp_current:
+            reassigned_flow_bandwidth[id_flow] = 0
 
         return reassigned_flow_bandwidth
