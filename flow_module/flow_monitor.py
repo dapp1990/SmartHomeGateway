@@ -2,10 +2,6 @@ from flow_module.flow_scheduler import FlowScheduler
 from queue import Queue
 from threading import Thread
 import requests
-from aiohttp import ClientSession
-from aiohttp import web
-import logging as log
-import asyncio
 
 
 # reason _packet_in_handler is already asyncronous
@@ -34,11 +30,12 @@ class FlowMonitor:
         self.outgoing_flows = {}
         self.bandwidths = {}
         self.cache = {}
+        #self.loop = asyncio.get_event_loop()
 
         self.local_port = 2  # 4294967294
 
         self.requests = Queue()
-        num_threads = 100
+        num_threads = 50
         for i in range(num_threads):
             requests_thread = Thread(target=self.process_request)
             requests_thread.daemon = True
@@ -155,20 +152,22 @@ class FlowMonitor:
                                                          self.max_size)
 
     def del_bandwidth(self,id_flow):
-        loop = asyncio.get_event_loop()
-        data = self.cache[id_flow][2]
-        future = asyncio.ensure_future(self.save_statistics(id_flow, data))
+        print("Deleting bandwdths - >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        #loop = asyncio.get_event_loop()
+        #data = self.cache[id_flow][2]
+        #self.save_statistics(id_flow, data)
         del self.bandwidths[id_flow]
         del self.outgoing_flows[id_flow]
         del self.cache[id_flow]
-        loop.run_until_complete(future)
+        #loop.run_until_complete(future)
+        print("FINISH deleting bandwdth->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
-    async def save_statistics(self, id_flow, temp):
-        async with ClientSession() as session:
-            for length,time in temp:
-                data = {"id_flow": id_flow,
-                        "size": length,
-                        "time": time}
-                url = self.statistics_url + "/save_statistics"
-                async with session.post(url, json=data) as response:
-                    res = await response.read()
+    def save_statistics(self, id_flow, temp):
+        for length,time in temp:
+            data = {"id_flow": id_flow,
+                    "size": length,
+                    "time": time}
+            url = self.statistics_url + "/save_statistics"
+            res = requests.post(url,
+                                json=data,
+                                headers={'Content-type': 'application/json'})
