@@ -2,6 +2,7 @@ from flow_module.flow_scheduler import FlowScheduler
 from queue import Queue
 from threading import Thread
 import requests
+import types
 #import asyncio
 #from aiohttp import ClientSession
 
@@ -62,10 +63,14 @@ class FlowMonitor:
                               parser,time):
         #print("outgoing notification with {}".format(self.outgoing_flows))
         if id_flow not in self.outgoing_flows:
-            bandwidth = self.get_bandwidth(id_flow)
+            result = self.get_bandwidth(id_flow)
+            if isinstance(result, dict):
+                for flow in result:
+                    self.set_bandwidth(flow, result[flow])
+            else:
             #print("Setting bandwidth to {}".format(bandwidth))
             #bandwidth = 100000
-            self.set_bandwidth(id_flow, bandwidth)
+                self.set_bandwidth(id_flow, result)
             self.cache[id_flow] = [time, None, []]
             #append
         self.cache[id_flow][1] = time

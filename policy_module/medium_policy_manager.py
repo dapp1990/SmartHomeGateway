@@ -2,7 +2,6 @@ from .interface_policy_manager import InterfacePolicy
 import logging as log
 from datetime import datetime
 
-
 # TODO: Make unittest
 
 
@@ -34,13 +33,16 @@ class MediumPolicyManager(InterfacePolicy):
         current_capacity = sum(current_flows.values())
 
         if self.max_capacity+self.reserved_bytes <= current_capacity:
-            log.warning("Impossible to assign bandwidth, current capacity "
-                        "is larger than max_capacity+reserved_capacity")
-            return 0
+            log.warning("Full capacity, adjusting bandwidths")
+            temp = {}
+            for flow in current_flows:
+                temp[flow] = (current_flows[flow]/current_capacity)\
+                             * self.max_capacity
+            temp[flow_id] = self.reserved_bytes
+            return temp
+        else:
+            return self.reserved_bytes
 
-        return self.reserved_bytes
-
-    # Todo: add hard constrains (max and min bandwidth rate)
     def update_bandwidth(self, flow_id, flow_current_bandwidth,
                          flow_statistics, time_str):
         """Update the bandwidths of the given flows.
