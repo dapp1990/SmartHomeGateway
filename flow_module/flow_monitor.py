@@ -1,7 +1,7 @@
 from flow_module.flow_scheduler import FlowScheduler
 from queue import Queue
 from threading import Thread
-import requests
+#import requests
 #import asyncio
 #from aiohttp import ClientSession
 
@@ -53,7 +53,7 @@ class FlowMonitor:
     def process_request(self):
         while True:
             function, parameters = self.requests.get()
-	
+
             function(*parameters)
 
             self.requests.task_done()
@@ -80,10 +80,8 @@ class FlowMonitor:
         #    return
         print("before self.get_updates {}".format(self.bandwidths))
         flow_dict = self.get_updates(id_flow, request_time)
-        #FIXME: seems that even the receiver is delete!
         print("result of policy {}".format(flow_dict))
         for id_flow in flow_dict:
-            #TODO: maybe it is better to make it variable
             if flow_dict[id_flow] <= 5:
                 self.del_bandwidth(id_flow)
             else:
@@ -92,8 +90,6 @@ class FlowMonitor:
         print("after self.get_updates {}".format(self.bandwidths))
 
     def get_updates(self, id_flow, request_time):
-        #print("update_bandwidths with id {}".format(id_flow))
-        #print("content of bandwidths {}".format(id_flow))
         # TODO[id:1]: maybe it is better to request the bandwidth of every flow
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths,
                 'cache': self.cache, 'time_request': request_time}

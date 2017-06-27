@@ -10,12 +10,7 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from datetime import datetime
 from flow_module.flow_monitor import FlowMonitor
-from queue import Queue
-from threading import Thread
-import requests
 
-
-# TODO: convert this module into a python packet
 
 # reason _packet_in_handler is already asyncronous
 # https://thenewstack.io/sdn-series-part-iv-ryu-a-rich
@@ -30,13 +25,6 @@ class FlowController(app_manager.RyuApp):
         self.monitor = FlowMonitor()
 
         self.logger.info("Initializing Queues")
-        self.statistics_queue = Queue()
-        #for i in range(50):
-        #    self.statistics_thread = Thread(target=self.save_statistics,
-        #                                    args=(self.statistics_queue,))
-        #    self.logger.info("Starting worker")
-        #    self.statistics_thread.daemon = True
-        #    self.statistics_thread.start()
 
         self.logger.info("Finishing ryu app")
 
@@ -92,11 +80,11 @@ class FlowController(app_manager.RyuApp):
         in_port = msg.match['in_port']
         dst = eth.dst
         src = eth.src
-        id_flow = str(eth.src) + str(eth.dst)
-        #if in_port == 1:
-        #    id_flow = str(eth.src) + str(eth.dst)
-        #else:
-        #    id_flow = str(eth.dst) + str(eth.src)
+        #id_flow = str(eth.src) + str(eth.dst)
+        if in_port == 1:
+            id_flow = str(eth.src) + str(eth.dst)
+        else:
+            id_flow = str(eth.dst) + str(eth.src)
 
         """ Debug """
         #dpid = datapath.id
@@ -108,28 +96,3 @@ class FlowController(app_manager.RyuApp):
 
         self.monitor.notification(self.monitor.outgoing_notification,
                                   parameters)
-
-        #self.statistics_queue.put((id_flow, ev.msg.total_len, now_str))
-
-        #data = {'id_flow': id_flow,
-        #        'size': ev.msg.total_len,
-        #        'time': now_str}
-        # FIXME: save statistics
-
-        #data = {"id_flow": "192.168.10.90192.168.30.201", "size": 20000,
-        #        "time": now_str}
-        #res = requests.post(self.statistics_url + "/save_statistics",
-        #                    json=data,
-        #                    headers={'Content-type': 'application/json'})
-        
-
-    def save_statistics(self, q):
-        while True:
-            id_flow, length, time = q.get()
-            data = {"id_flow": id_flow,
-                    "size": length,
-                    "time": time}
-            res = requests.post(self.statistics_url + "/save_statistics",
-                                json=data,
-                                headers={'Content-type': 'application/json'})
-            q.task_done()
