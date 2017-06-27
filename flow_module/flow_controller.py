@@ -65,7 +65,7 @@ class FlowController(app_manager.RyuApp):
         pkt = packet.Packet(msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
 
-        # No need to forward lldp packet, so they are ignored
+        # No need to forward lldp packets, so they are ignored
         if eth.ethertype == ether_types.ETH_TYPE_LLDP:
             return
 
@@ -80,11 +80,13 @@ class FlowController(app_manager.RyuApp):
         in_port = msg.match['in_port']
         dst = eth.dst
         src = eth.src
-        #id_flow = str(eth.src) + str(eth.dst)
-        if in_port == 1:
-            id_flow = str(eth.src) + str(eth.dst)
-        else:
-            id_flow = str(eth.dst) + str(eth.src)
+        # each flow uplink and downlink are individuals
+        id_flow = str(eth.src) + str(eth.dst)
+        # each uplink and downlink is one flow
+        #if in_port == 1:
+        #    id_flow = str(eth.src) + str(eth.dst)
+        #else:
+        #    id_flow = str(eth.dst) + str(eth.src)
 
         """ Debug """
         #dpid = datapath.id

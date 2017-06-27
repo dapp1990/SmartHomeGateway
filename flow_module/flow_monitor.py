@@ -1,7 +1,7 @@
 from flow_module.flow_scheduler import FlowScheduler
 from queue import Queue
 from threading import Thread
-#import requests
+import requests
 #import asyncio
 #from aiohttp import ClientSession
 
@@ -25,7 +25,7 @@ class FlowMonitor:
         self.policy_url = "http://localhost:5002"
         self.statistics_url = "http://localhost:5001"
 
-        self.max_size = 10
+        self.max_size = 5 # after several test 5 looks a good threashold
 
         self.accept_update = True
         self.outgoing_flows = {}
@@ -80,7 +80,7 @@ class FlowMonitor:
         #    return
         print("before self.get_updates {}".format(self.bandwidths))
         flow_dict = self.get_updates(id_flow, request_time)
-        print("result of policy {}".format(flow_dict))
+        #print("result of policy {}".format(flow_dict))
         for id_flow in flow_dict:
             if flow_dict[id_flow] <= 5:
                 self.del_bandwidth(id_flow)

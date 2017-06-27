@@ -98,11 +98,11 @@ class MediumPolicyManager(InterfacePolicy):
                 new_bandwidth = 0
             total_bandwidth += new_bandwidth
             temp[f_id] = new_bandwidth
-        log.info("This is the percentage %s", (temp[f_id]/total_bandwidth))
+            log.info("This is the percentage %s", (temp[f_id]/total_bandwidth))
 
-        reassigned_flow_bandwidth[f_id] = \
+            reassigned_flow_bandwidth[f_id] = \
             (temp[f_id]/total_bandwidth) * self.max_capacity
-        log.info("this is the perfectage %s", reassigned_flow_bandwidth[f_id])
+            log.info("this is the perfectage %s", reassigned_flow_bandwidth[f_id])
 
         current_capacity = sum(reassigned_flow_bandwidth.values())
 
