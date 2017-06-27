@@ -1,7 +1,6 @@
 from .interface_policy_manager import InterfacePolicy
 import logging as log
-import numpy as np
-from .util import savitzky_golay
+from datetime import datetime
 
 # TODO: Make unittest
 
@@ -34,15 +33,18 @@ class MediumPolicyManager(InterfacePolicy):
         current_capacity = sum(current_flows.values())
 
         if self.max_capacity+self.reserved_bytes <= current_capacity:
-            log.warning("Impossible to assign bandwidth, current capacity "
-                        "is larger than max_capacity+reserved_capacity")
-            return 0
+            log.warning("Full capacity, adjusting bandwidths")
+            temp = {}
+            for flow in current_flows:
+                temp[flow] = (current_flows[flow]/current_capacity)\
+                             * self.max_capacity
+            temp[flow_id] = self.reserved_bytes
+            return temp
+        else:
+            return self.reserved_bytes
 
-        return self.reserved_bytes
-
-    # Todo: add hard constrains (max and min bandwidth rate)
     def update_bandwidth(self, flow_id, flow_current_bandwidth,
-                         flow_statistics, time_lapse):
+                         flow_statistics, time_str):
         """Update the bandwidths of the given flows.
 
         NOTE: Actually the constrain new_bandwidth < self.reserved_bytes then 0
@@ -68,46 +70,43 @@ class MediumPolicyManager(InterfacePolicy):
         Args:
             flow_current_bandwidth: bandwidth of the current flows WITH
             flow_id.
-            flow_statistics ([(str,[int])]): Statistics of the last active
-            flows without flow_id.
+            flow_statistics ([(str,[int])]): Statistics of the last active.
             flow_id (int): The flow id which bandwidth request to be changed.
         """
 
         reassigned_flow_bandwidth = {}
-
+        temp_current = flow_current_bandwidth
+        temp = {}
+        total_bandwidth = 0
         for f_id in flow_statistics:
-            # Smooth dataset using Savitzky-Golay filter to avoid peak in
-            # the bandwidth estimation
-            if flow_statistics[f_id]:
-                measurements_hat = \
-                    savitzky_golay(np.array(flow_statistics[f_id]), 51, 3)
-                new_bandwidth = sum(flow_statistics[f_id])/time_lapse
+            del temp_current[f_id]
+
+            initial = datetime.strptime(flow_statistics[f_id][0], '%Y-%m-%d '
+                                                                  '%H:%M:%S.%f')
+            final = datetime.strptime(flow_statistics[f_id][1], '%Y-%m-%d '
+                                                                '%H:%M:%S.%f')
+            request_time = datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S.%f')
+
+            delta_time = request_time - final
+            total_delta = final - initial
+            # TODO: must be a clever way to fix this
+            if delta_time.total_seconds() < 5:
+                if 0 == total_delta.total_seconds():
+                     new_bandwidth = flow_statistics[f_id][2][0][0]
+                else:
+                     new_bandwidth = \
+                            sum([x[0] for x in flow_statistics[f_id][2]])\
+                            /total_delta.total_seconds()
             else:
                 new_bandwidth = 0
+            total_bandwidth += new_bandwidth
+            temp[f_id] = new_bandwidth
 
-            #if new_bandwidth < self.reserved_bytes:
-                #reassigned_flow_bandwidth[f_id] = 0
-            # TODO: Even wheter here I can update all the bandwidths according
-            # with
-            # the global view !
-            if new_bandwidth < flow_current_bandwidth[f_id]:
-                reassigned_flow_bandwidth[f_id] = new_bandwidth
-            else:
-                reassigned_flow_bandwidth[f_id] = flow_current_bandwidth[f_id]
-
-        current_capacity = sum(reassigned_flow_bandwidth.values())
-
-        # Todo: new a log to see if there is any warning here!
-        available_bandwidth = self.max_capacity - current_capacity
-        if available_bandwidth <= 0:
-            log.warning("No more bandwidth available for %s", flow_id)
-            new_bandwidth = 0
-        else:
-            new_bandwidth = min([available_bandwidth,
-                                 flow_current_bandwidth[flow_id]])
-
-        reassigned_flow_bandwidth[flow_id] = \
-            flow_current_bandwidth[flow_id] + new_bandwidth
+        for f_id in temp:
+            reassigned_flow_bandwidth[f_id] = \
+                (temp[f_id]/total_bandwidth) * self.max_capacity
+            log.info("The bandwidth assign  of %s is %s",
+                     f_id, reassigned_flow_bandwidth[f_id])
 
         current_capacity = sum(reassigned_flow_bandwidth.values())
 
@@ -116,5 +115,9 @@ class MediumPolicyManager(InterfacePolicy):
                         "%s",
                         self.max_capacity + self.reserved_bytes,
                         current_capacity)
+        # Sanity check, all flows that are not in statistics implies no
+        # activity, so assign a bandwidth of 0
+        for id_flow in temp_current:
+            reassigned_flow_bandwidth[id_flow] = 0
 
         return reassigned_flow_bandwidth

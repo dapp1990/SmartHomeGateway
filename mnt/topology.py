@@ -1,8 +1,10 @@
 # sudo mn -- custom topology.py --topo
 
 
-# sudo ovs-ofctl add-flow s2 in_port=1,actions=2
+# sudo ovs-ofctl add-flow s2 in_port=1,actions=normal
 # sudo ovs-ofctl add-flow s2 in_port=2,actions=1
+
+
 # sudo ovs-vsctl set-controller s1 tcp:127.0.0.1
 
 """
@@ -21,7 +23,7 @@ from mininet.log import setLogLevel, info
 import time
 
 
-def gatewayNet():
+def gatewayNet(num):
     "Simple topology"
 
     net = Mininet(controller=None)
@@ -34,12 +36,14 @@ def gatewayNet():
     server = net.addHost('h1', ip='10.0.10.1/24')
     serverswitch = net.addSwitch('s1')
     net.addLink(serverswitch, server)
+
     wlan0 = net.addSwitch('s2')
     net.addLink(serverswitch,wlan0)
 
-    iot = net.addHost('h2', ip='10.0.10.2/24')
+    for i in range(num):
+        iot = net.addHost("h{}".format(i+2), ip="10.0.10.{}/24".format(i+2))
 
-    net.addLink(iot, wlan0)
+        net.addLink(iot, wlan0)
 
     info('*** Starting network\n')
     net.start()
@@ -55,5 +59,5 @@ def gatewayNet():
 
 if __name__ == '__main__':
     setLogLevel('info')
-    gatewayNet()
+    gatewayNet(3)
 
