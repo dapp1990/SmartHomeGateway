@@ -2,7 +2,8 @@ from flow_module.flow_scheduler import FlowScheduler
 from queue import Queue
 from threading import Thread
 import requests
-
+import asyncio
+from aiohttp import ClientSession
 
 # reason _packet_in_handler is already asyncronous
 # https://thenewstack.io/sdn-series-part-iv-ryu-a-rich
@@ -153,16 +154,34 @@ class FlowMonitor:
 
     def del_bandwidth(self,id_flow):
         print("Deleting bandwdths - >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        #loop = asyncio.get_event_loop()
-        #data = self.cache[id_flow][2]
+        loop = asyncio.new_event_loop()
+        data = self.cache[id_flow][2]
+        #task = self.loop.create_task(self.fetch_per_request())
+        future = asyncio.ensure_future(self.save_statistics(id_flow, data))
+
         #self.save_statistics(id_flow, data)
+
         del self.bandwidths[id_flow]
         del self.outgoing_flows[id_flow]
         del self.cache[id_flow]
-        #loop.run_until_complete(future)
+
+        loop.run_until_complete(future)
         print("FINISH deleting bandwdth->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
-    def save_statistics(self, id_flow, length, time):
+    async def save_statistics(self, id_flow, cache):
+        url = self.statistics_url + "/save_statistics"
+        async with ClientSession() as session:
+            for length, time in cache:
+                data = {"id_flow": id_flow,
+                        "size": length,
+                        "time": time}
+                task = asyncio.ensure_future(self.fetch(url, session, data))
+
+    async def fetch(self, url, session, data):
+        async with session.post(url, json=data) as response:
+            return await response.read()
+
+        """
         data = {"id_flow": id_flow,
                 "size": length,
                 "time": time}
@@ -170,7 +189,9 @@ class FlowMonitor:
         res = requests.post(url,
                             json=data,
                             headers={'Content-type': 'application/json'})
-        """
+
+
+
         for length,time in temp:
             data = {"id_flow": id_flow,
                     "size": length,
