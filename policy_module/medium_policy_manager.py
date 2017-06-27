@@ -90,7 +90,9 @@ class MediumPolicyManager(InterfacePolicy):
             if delta_time.total_seconds() < 5 \
                     and 0 < total_delta.total_seconds():
                 
-                new_bandwidth = sum([x[0] for x in flow_statistics[f_id][2]])/total_delta.total_seconds()
+                new_bandwidth = \
+                    sum([x[0] for x in flow_statistics[f_id][2]])\
+                    /total_delta.total_seconds()
             else:
                 new_bandwidth = 0
             total_bandwidth += new_bandwidth

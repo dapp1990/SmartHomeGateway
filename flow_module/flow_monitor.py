@@ -2,7 +2,11 @@ from flow_module.flow_scheduler import FlowScheduler
 from queue import Queue
 from threading import Thread
 import requests
-import json
+from aiohttp import ClientSession
+from aiohttp import web
+import logging as log
+import asyncio
+
 
 # reason _packet_in_handler is already asyncronous
 # https://thenewstack.io/sdn-series-part-iv-ryu-a-rich
@@ -151,17 +155,20 @@ class FlowMonitor:
                                                          self.max_size)
 
     def del_bandwidth(self,id_flow):
+        loop = asyncio.get_event_loop()
+        data = self.cache[id_flow][2]
+        future = asyncio.ensure_future(self.save_statistics(id_flow, data))
         del self.bandwidths[id_flow]
         del self.outgoing_flows[id_flow]
-	temp = self.cache[id_flow][2]
         del self.cache[id_flow]
+        loop.run_until_complete(future)
 
-
-    def save_statistics(self, id_flow, length, time):
-        data = {"id_flow": id_flow,
-                "size": length,
-                "time": time}
-        res = requests.post(self.statistics_url + "/save_statistics",
-                            json=data,
-                            headers={'Content-type': 'application/json'})
-
+    async def save_statistics(self, id_flow, temp):
+        async with ClientSession() as session:
+            for length,time in temp:
+                data = {"id_flow": id_flow,
+                        "size": length,
+                        "time": time}
+                url = self.statistics_url + "/save_statistics"
+                async with session.post(url, json=data) as response:
+                    res = await response.read()
