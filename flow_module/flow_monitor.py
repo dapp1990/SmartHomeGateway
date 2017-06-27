@@ -22,6 +22,7 @@ class FlowMonitor:
 
     def __init__(self):
         self.policy_url = "http://localhost:5002"
+        self.statistics_url = "http://localhost:5001"
 
         self.max_size = 10
 
@@ -33,7 +34,7 @@ class FlowMonitor:
         self.local_port = 2  # 4294967294
 
         self.requests = Queue()
-        num_threads = 50
+        num_threads = 100
         for i in range(num_threads):
             requests_thread = Thread(target=self.process_request)
             requests_thread.daemon = True
@@ -66,10 +67,11 @@ class FlowMonitor:
             self.cache[id_flow] = [time, None, []]
             #append
         self.cache[id_flow][1] = time
-        self.cache[id_flow][2].append(msg_len)
+        self.cache[id_flow][2].append([msg_len,time])
 
         self.set_outgoing_scheduler(id_flow, msg_len, datapath, in_port, msg,
                                     parser)
+        #self.save_statistics(id_flow, msg_len, time)
 
     def bottleneck_notification(self, id_flow, request_time):
         #if id_flow not in self.bandwidths:
@@ -149,13 +151,17 @@ class FlowMonitor:
                                                          self.max_size)
 
     def del_bandwidth(self,id_flow):
-        #TODO: be sure that the flow_scheduler is really dead, that a thread
-        # is not just appearing.
-        # FIXME: if you set to zero only, it will be like that for ever!!!
-        # it must be prunning somehow. Solution is controlling update
-        # parameters
         del self.bandwidths[id_flow]
         del self.outgoing_flows[id_flow]
+	temp = self.cache[id_flow][2]
         del self.cache[id_flow]
-        print("after deliting bandwidths {}".format(self.bandwidths))
-        print("after deliting outgoiing {}".format(self.outgoing_flows))
+
+
+    def save_statistics(self, id_flow, length, time):
+        data = {"id_flow": id_flow,
+                "size": length,
+                "time": time}
+        res = requests.post(self.statistics_url + "/save_statistics",
+                            json=data,
+                            headers={'Content-type': 'application/json'})
+

@@ -24,22 +24,19 @@ class FlowController(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
     def __init__(self, *args, **kwargs):
-        super(FlowController, self).__init__(*args, **kwargs)
-
-        self.logger.info("Initializing ryu app")
-        self.statistics_url = "http://localhost:5001"
+        super(FlowController, self).__init__(*args, **kwargs) 
 
         self.logger.info("Initializing FlowMonitor")
         self.monitor = FlowMonitor()
 
         self.logger.info("Initializing Queues")
         self.statistics_queue = Queue()
-        for i in range(10):
-            self.statistics_thread = Thread(target=self.save_statistics,
-                                            args=(self.statistics_queue,))
-            self.logger.info("Starting worker")
-            self.statistics_thread.daemon = True
-            self.statistics_thread.start()
+        #for i in range(50):
+        #    self.statistics_thread = Thread(target=self.save_statistics,
+        #                                    args=(self.statistics_queue,))
+        #    self.logger.info("Starting worker")
+        #    self.statistics_thread.daemon = True
+        #    self.statistics_thread.start()
 
         self.logger.info("Finishing ryu app")
 
@@ -95,11 +92,11 @@ class FlowController(app_manager.RyuApp):
         in_port = msg.match['in_port']
         dst = eth.dst
         src = eth.src
-        #id_flow = str(eth.src) + str(eth.dst)
-        if in_port == 1:
-            id_flow = str(eth.src) + str(eth.dst)
-        else:
-            id_flow = str(eth.dst) + str(eth.src)
+        id_flow = str(eth.src) + str(eth.dst)
+        #if in_port == 1:
+        #    id_flow = str(eth.src) + str(eth.dst)
+        #else:
+        #    id_flow = str(eth.dst) + str(eth.src)
 
         """ Debug """
         dpid = datapath.id
@@ -118,14 +115,13 @@ class FlowController(app_manager.RyuApp):
         #        'size': ev.msg.total_len,
         #        'time': now_str}
         # FIXME: save statistics
-        """
-        now_str = str(datetime.now())
-        data = {"id_flow": "192.168.10.90192.168.30.201", "size": 20000,
-                "time": now_str}
-        res = requests.post(self.statistics_url + "/save_statistics",
-                            json=data,
-                            headers={'Content-type': 'application/json'})
-        """
+
+        #data = {"id_flow": "192.168.10.90192.168.30.201", "size": 20000,
+        #        "time": now_str}
+        #res = requests.post(self.statistics_url + "/save_statistics",
+        #                    json=data,
+        #                    headers={'Content-type': 'application/json'})
+        
 
     def save_statistics(self, q):
         while True:
