@@ -1,7 +1,5 @@
 from .interface_policy_manager import InterfacePolicy
 import logging as log
-import numpy as np
-from .util import savitzky_golay
 from datetime import datetime
 
 
@@ -70,17 +68,18 @@ class MediumPolicyManager(InterfacePolicy):
         Args:
             flow_current_bandwidth: bandwidth of the current flows WITH
             flow_id.
-            flow_statistics ([(str,[int])]): Statistics of the last active
-            flows without flow_id.
+            flow_statistics ([(str,[int])]): Statistics of the last active.
             flow_id (int): The flow id which bandwidth request to be changed.
         """
 
         reassigned_flow_bandwidth = {}
 
+        temp = {}
+        total_bandwidth = 0
         for f_id in flow_statistics:
 
             initial = datetime.strptime(flow_statistics[f_id][0], '%Y-%m-%d '
-                                                          '%H:%M:%S.%f')
+                                                                  '%H:%M:%S.%f')
             final = datetime.strptime(flow_statistics[f_id][1], '%Y-%m-%d '
                                                                 '%H:%M:%S.%f')
             request_time = datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S.%f')
@@ -88,35 +87,22 @@ class MediumPolicyManager(InterfacePolicy):
             delta_time = request_time - final
             total_delta = final - initial
             # TODO: must be a clever way to fix this
-            if delta_time.total_seconds() < 5 and 0 < total_delta.total_seconds() :
+            if delta_time.total_seconds() < 5 \
+                    and 0 < total_delta.total_seconds():
                 
                 new_bandwidth = sum(flow_statistics[f_id][
                                         2])/total_delta.total_seconds()
             else:
                 new_bandwidth = 0
+            total_bandwidth += new_bandwidth
+            temp[f_id] = new_bandwidth
 
-            #FIXME for sure we need anothe good method to assign bandwidth
-
-            if new_bandwidth < flow_current_bandwidth[f_id]:
-                reassigned_flow_bandwidth[f_id] = new_bandwidth
-            else:
-                reassigned_flow_bandwidth[f_id] = flow_current_bandwidth[f_id]
+        reassigned_flow_bandwidth[f_id] = \
+            (temp[f_id]/total_bandwidth) * self.max_capacity
 
         current_capacity = sum(reassigned_flow_bandwidth.values())
 
         # Todo: new a log to see if there is any warning here!
-        available_bandwidth = self.max_capacity - current_capacity
-        if available_bandwidth <= 0:
-            log.warning("No more bandwidth available for %s", flow_id)
-            new_bandwidth = 0
-        else:
-            new_bandwidth = min([available_bandwidth,
-                                 flow_current_bandwidth[flow_id]])
-
-        reassigned_flow_bandwidth[flow_id] = \
-            flow_current_bandwidth[flow_id] + new_bandwidth
-
-        current_capacity = sum(reassigned_flow_bandwidth.values())
 
         if self.max_capacity+self.reserved_bytes < current_capacity:
             log.warning("Capacity overflow max+reserved %s - assigned capacity "
