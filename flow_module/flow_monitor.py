@@ -25,7 +25,7 @@ class FlowMonitor:
         self.policy_url = "http://localhost:5002"
         self.statistics_url = "http://localhost:5001"
 
-        self.max_size = 5 # after several test 5 looks a good threashold
+        self.max_size = 10 # after several test 10 looks a good threashold
 
         self.accept_update = True
         self.outgoing_flows = {}

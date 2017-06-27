@@ -88,19 +88,19 @@ class MediumPolicyManager(InterfacePolicy):
             delta_time = request_time - final
             total_delta = final - initial
             # TODO: must be a clever way to fix this
-            if delta_time.total_seconds() < 5 \
-                    and 0 < total_delta.total_seconds():
-                
-                new_bandwidth = \
-                    sum([x[0] for x in flow_statistics[f_id][2]])\
-                    /total_delta.total_seconds()
+            if delta_time.total_seconds() < 5:
+                if 0 == total_delta.total_seconds():
+                     new_bandwidth = flow_statistics[f_id][2][0][0]
+                else:
+                     new_bandwidth = \
+                            sum([x[0] for x in flow_statistics[f_id][2]])\
+                            /total_delta.total_seconds()
             else:
                 new_bandwidth = 0
             total_bandwidth += new_bandwidth
             temp[f_id] = new_bandwidth
-            log.info("Percentage of %s is %s", (f_id,
-                                               temp[f_id]/total_bandwidth))
 
+        for f_id in temp:
             reassigned_flow_bandwidth[f_id] = \
                 (temp[f_id]/total_bandwidth) * self.max_capacity
             log.info("The bandwidth assign  of %s is %s",

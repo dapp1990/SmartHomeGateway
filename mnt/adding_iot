@@ -1,4 +1,6 @@
-py net.addHost('h4')
-py net.addLink(s2, net.get('h4'))
-py s2.attach('s1-eth4')
-py net.get('h4').cmd('ifconfig h4-eth0 10.0.10.4')
+for i in {1..3}
+do
+ovs-ofctl add-flow s2 in_port=1,actions=2
+ovs-ofctl add-flow s2 in_port=2,actions=1
+ovs-vsctl set-controller s1 tcp:127.0.0.1
+done

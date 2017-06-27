@@ -1,8 +1,10 @@
 # sudo mn -- custom topology.py --topo
 
 
-# sudo ovs-ofctl add-flow s2 in_port=1,actions=2
+# sudo ovs-ofctl add-flow s2 in_port=1,actions=normal
 # sudo ovs-ofctl add-flow s2 in_port=2,actions=1
+
+
 # sudo ovs-vsctl set-controller s1 tcp:127.0.0.1
 
 """
@@ -57,5 +59,5 @@ def gatewayNet(num):
 
 if __name__ == '__main__':
     setLogLevel('info')
-    gatewayNet(9)
+    gatewayNet(3)
 
