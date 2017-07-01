@@ -160,25 +160,27 @@ class FlowMonitor:
         # thread!
         # uvloop
         print("Deleting bandwidth - >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        #data = self.cache[id_flow][2]
+        data = self.cache[id_flow][2]
+        """
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError as e:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
+        """
 
         #task = loop.ensure_future(self.save_statistics(id_flow, data))
         #future = asyncio.ensure_future(self.save_statistics(id_flow, data))
-
-        self.save_statistics(id_flow, data)
-
         del self.bandwidths[id_flow]
         del self.outgoing_flows[id_flow]
         del self.cache[id_flow]
 
-        loop.run_until_complete(asyncio.wait(task))
+        self.save_statistics(id_flow, data)
+
+        #loop.run_until_complete(asyncio.wait(task))
         print("FINISH deleting bandwidth->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-    #Trciky for that nasty event loop because get loop change the main python thread!!!!
+    # Trciky for that nasty event loop because get loop change the main
+    # python thread!!!!
     def get_loop(self):
         try:
             loop = asyncio.get_event_loop()
@@ -188,7 +190,19 @@ class FlowMonitor:
         finally:
             return loop
     
-    async def save_statistics(self, id_flow, cache):
+    def save_statistics(self, id_flow, cache):
+        data = {'flow_id': id_flow, 'batch': cache}
+        res = requests.post(self.statistics_url + "/save_batch_statistics",
+                            json=data,
+                            headers={'Content-type': 'application/json'})
+        if not res.status_code == 200:
+            print("Statistics not saved, "
+                  "status code {}".format(res.status_code))
+        
+    """
+
+
+     async def save_statistics(self, id_flow, cache):
         url = self.statistics_url + "/save_statistics"
         async with ClientSession() as session:
             for length, time in cache:
@@ -197,10 +211,7 @@ class FlowMonitor:
                         "time": time}
                 async with session.post(url, json=data) as response:
                     return await response.read()
-   
-    #async def fetch(self, url, session, data):
-        
-    """
+
         data = {"id_flow": id_flow,
                 "size": length,
                 "time": time}

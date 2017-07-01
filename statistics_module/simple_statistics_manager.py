@@ -18,6 +18,14 @@ class SimpleStatisticsManager(InterfaceStatistics):
         db.close()
         return True
 
+    # TODO: unittest
+    def save_batch_statistics(self, statistics):
+        db = TinyDB('{}'.format(self.db_name))
+        for el in statistics[1]:
+            db.insert({'flow_id': statistics[0], 'size': el[0], 'time':el[1]})
+        db.close()
+        return True
+
     def get_statistics(self, flow_id, max_stat, time_from_str, time_to_str):
         db = TinyDB('{}'.format(self.db_name))
         query = db.search(Query().flow_id == flow_id)

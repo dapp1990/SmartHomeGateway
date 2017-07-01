@@ -87,6 +87,25 @@ class TestSimpleStatisticsManager(TestCase):
         for i in range(25):
             self.assertEquals(i+75, results[i])
 
+    def test_batch_retrieve_case(self):
+
+        data = []
+        for i in range(50):
+            data.append([i+50, str(datetime.now())])
+
+        self.simple_manager.save_batch_statistics('192.168.19.20192.168.19.77',
+                                                  data)
+
+        to_time = datetime.now()
+        from_time = to_time - timedelta(seconds=2)
+
+        data2 = []
+        for i in range(50):
+            data.append([i*3, str(datetime.now())])
+
+        self.simple_manager.save_batch_statistics('192.168.19.9876.168.19.77',
+                                                  data2)
+
     def tearDown(self):
         os.unlink('test_database.json')
         self.simple_manager = None
