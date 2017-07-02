@@ -26,7 +26,7 @@ class SimpleStatisticsManager(InterfaceStatistics):
                 db.insert({'flow_id': statistics[0], 'size': el[0], 'time':el[1]})
             db.close()
             return True
-        except RuntimeError as e:
+        except:
             return False
 
 
