@@ -5,6 +5,7 @@ import requests
 import types
 import asyncio
 from aiohttp import ClientSession
+from datetime import datetime
 
 # reason _packet_in_handler is already asyncronous
 # https://thenewstack.io/sdn-series-part-iv-ryu-a-rich
@@ -159,8 +160,10 @@ class FlowMonitor:
         # remember corrutines are important because the execute in the main
         # thread!
         # uvloop
-        print("Deleting bandwidth - >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        data = self.cache[id_flow][2]
+        #print("Deleting bandwidth - >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        #data = self.cache[id_flow][2]
+        now_str = str(datetime.now())
+        data = [[156, now_str], [156, now_str], [156, now_str], [156, now_str], [156, now_str] , [156, now_str], [156, now_str]]
         """
         try:
             loop = asyncio.get_event_loop()
@@ -178,7 +181,7 @@ class FlowMonitor:
         self.save_statistics(id_flow, data)
 
         #loop.run_until_complete(asyncio.wait(task))
-        print("FINISH deleting bandwidth->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        #print("FINISH deleting bandwidth->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     # Trciky for that nasty event loop because get loop change the main
     # python thread!!!!
     def get_loop(self):
@@ -191,7 +194,8 @@ class FlowMonitor:
             return loop
     
     def save_statistics(self, id_flow, cache):
-        data = {'flow_id': id_flow, 'batch': cache}
+        data = {"id_flow": id_flow, "batch": cache}
+        #print("Print Json {}".format(data))
         res = requests.post(self.statistics_url + "/save_batch_statistics",
                             json=data,
                             headers={'Content-type': 'application/json'})
