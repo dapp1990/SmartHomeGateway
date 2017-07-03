@@ -137,3 +137,6 @@ if __name__ == '__main__':
     statistics_server = StatisticsApi(SimpleStatisticsManager("statistics_db"))
     statistics_server.run(5001)
 
+
+
+
