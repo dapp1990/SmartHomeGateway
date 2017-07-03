@@ -22,7 +22,7 @@ class InterfaceStatistics(object):
         pass
 
     @abc.abstractmethod
-    def save_batch_statistics(self, flow, data):
+    def save_batch_statistics(self, statistics):
         """Abstract method to be implemented by the concrete StatisticsManager class.
 
         Args:
@@ -35,7 +35,7 @@ class InterfaceStatistics(object):
         pass
 
     @abc.abstractmethod
-    def get_statistics(self, table_id, max_stat, from_time_str, to_time_str):
+    def get_statistics(self, statistics):
         """Abstract method to be implemented by the concrete StatisticsManager class.
 
         Args:

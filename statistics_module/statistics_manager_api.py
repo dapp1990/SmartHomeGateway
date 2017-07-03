@@ -5,7 +5,8 @@ import logging as log
 import asyncio
 import random
 from concurrent.futures import ProcessPoolExecutor
-
+from threading import Thread
+from queue import Queue
 
 # Note: check https://docs.python.org/3/library/asyncio-eventloop.html or
 # https://pymotw.com/3/asyncio/executors.html for asyn operations
@@ -41,6 +42,11 @@ class StatisticsApi:
                                  self.save_batch_statistics)
         self.app.router.add_post('/get_statistics', self.get_statistics)
 
+        self.requests = Queue()
+        self.requests_thread = Thread(target=self.process_request)
+        self.requests_thread.daemon = True
+        self.requests_thread.start()
+
     async def get_statistics(self, request):
         log.info("get_statistics with parameters %s", request)
         data = await request.json()
@@ -49,8 +55,9 @@ class StatisticsApi:
                       data['from_time'], data['to_time']]
 
         result = await self.loop.run_in_executor(ProcessPoolExecutor(),
-                                                 self.s_m.get_statistics,
-                                                 *parameters)
+                                                 self.requests.put,
+                                                 [1,
+                                                 parameters])
         log.info("result of get_statistics %s", result)
         return web.json_response({'response': result})
 
@@ -64,9 +71,12 @@ class StatisticsApi:
         # which is running in other process with other MEMORY, so the cache
         # is always missed!
         # https://stackoverflow.com/questions/30333591/python-3-global-variables-with-asyncio-apscheduler
-        result = await self.loop.run_in_executor(ProcessPoolExecutor(),
-                                                 self.s_m.save_statistics,
-                                                 parameters)
+        #result = await self.loop.run_in_executor(ProcessPoolExecutor(),
+        #                                         self.requests.put,[
+        #                                         2,
+        #                                         parameters])
+
+        result = self.requests.put([self.s_m.save_statistics, parameters])
 
         # result =  self.s_m.save_statistics(parameters)
         log.info("result of save_statistics %s", result)
@@ -82,10 +92,14 @@ class StatisticsApi:
         # which is running in other process with other MEMORY, so the cache
         # is always missed!
         # https://stackoverflow.com/questions/30333591/python-3-global-variables-with-asyncio-apscheduler
-        result = await self.loop.run_in_executor(ProcessPoolExecutor(),
-                                                 self.s_m.save_batch_statistics,
-                                                 parameters)
 
+        #result = await self.loop.run_in_executor(ProcessPoolExecutor(),
+        #                                         self.requests.put,
+        #                                         [3,
+        #                                          "dos"]
+        #
+        #                                )
+        result = self.requests.put([self.s_m.save_batch_statistics,parameters])
         # result =  self.s_m.save_statistics(parameters)
         log.info("result of save_statistics %s", result)
         return web.json_response({'response': result})
@@ -111,6 +125,15 @@ class StatisticsApi:
     def get_app(self):
         return self.app
 
+    def process_request(self):
+        while True:
+            function, parameters = self.requests.get()
+
+            function(parameters)
+
+            self.requests.task_done()
+
 if __name__ == '__main__':
     statistics_server = StatisticsApi(SimpleStatisticsManager("statistics_db"))
     statistics_server.run(5001)
+

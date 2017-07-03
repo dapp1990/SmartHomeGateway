@@ -39,7 +39,7 @@ class FlowMonitor:
         self.local_port = 2  # 4294967294
 
         self.requests = Queue()
-        num_threads = 50
+        num_threads = 100
         for i in range(num_threads):
             requests_thread = Thread(target=self.process_request)
             requests_thread.daemon = True
