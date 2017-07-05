@@ -3,8 +3,9 @@ from queue import Queue
 from threading import Thread
 import requests
 import types
-#import asyncio
-#from aiohttp import ClientSession
+import asyncio
+from aiohttp import ClientSession
+from datetime import datetime
 
 # reason _packet_in_handler is already asyncronous
 # https://thenewstack.io/sdn-series-part-iv-ryu-a-rich
@@ -33,11 +34,12 @@ class FlowMonitor:
         self.bandwidths = {}
         self.cache = {}
         #self.loop = asyncio.get_event_loop()
+        #self.loop = asyncio.new_event_loop()
 
         self.local_port = 2  # 4294967294
 
         self.requests = Queue()
-        num_threads = 50
+        num_threads = 100
         for i in range(num_threads):
             requests_thread = Thread(target=self.process_request)
             requests_thread.daemon = True
@@ -70,7 +72,7 @@ class FlowMonitor:
             else:
             #print("Setting bandwidth to {}".format(bandwidth))
             #bandwidth = 100000
-                self.set_bandwidth(id_flow, result)
+                self.set_bandwidth(id_flow, float(result))
             self.cache[id_flow] = [time, None, []]
             #append
         self.cache[id_flow][1] = time
@@ -83,7 +85,7 @@ class FlowMonitor:
     def bottleneck_notification(self, id_flow, request_time):
         #if id_flow not in self.bandwidths:
         #    return
-        print("before self.get_updates {}".format(self.bandwidths))
+        #print("before self.get_updates {}".format(self.bandwidths))
         flow_dict = self.get_updates(id_flow, request_time)
         #print("result of policy {}".format(flow_dict))
         for id_flow in flow_dict:
@@ -92,7 +94,7 @@ class FlowMonitor:
             else:
                 self.set_bandwidth(id_flow, flow_dict[id_flow])
         self.accept_update = True
-        print("after self.get_updates {}".format(self.bandwidths))
+        #print("after self.get_updates {}".format(self.bandwidths))
 
     def get_updates(self, id_flow, request_time):
         # TODO[id:1]: maybe it is better to request the bandwidth of every flow
@@ -110,14 +112,14 @@ class FlowMonitor:
             return None
 
     def get_bandwidth(self, id_flow):
-        print("getting bandwidth {}".format(id_flow))
+        #print("getting bandwidth {}".format(id_flow))
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
         res = requests.post(self.policy_url + "/get_bandwidth",
                             json=data,
                             headers={'Content-type': 'application/json'})
         if res.status_code == 200:
-            data = res.json()
-            return float(data['response'])
+            data = res.json() 
+            return data['response']
         else:
             print("Impossible to assing width, "
                                 "status code {}".format(res.status_code))
@@ -154,34 +156,66 @@ class FlowMonitor:
                                                          self.max_size)
 
     def del_bandwidth(self,id_flow):
-        print("Deleting bandwdths - >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        #loop = asyncio.new_event_loop()
-        #data = self.cache[id_flow][2]
-        #task = self.loop.create_task(self.fetch_per_request())
+        #Corrutines! I should use corrutines! to actually save it.
+        # remember corrutines are important because the execute in the main
+        # thread!
+        # uvloop
+        #print("Deleting bandwidth - >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        data = self.cache[id_flow][2]
+        #now_str = str(datetime.now())
+        #data = [[156, now_str], [156, now_str], [156, now_str], [156,
+        # now_str], [156, now_str] , [156, now_str], [156, now_str]]
+        """
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError as e:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        """
+
+        #task = loop.ensure_future(self.save_statistics(id_flow, data))
         #future = asyncio.ensure_future(self.save_statistics(id_flow, data))
-
-        #self.save_statistics(id_flow, data)
-
         del self.bandwidths[id_flow]
         del self.outgoing_flows[id_flow]
         del self.cache[id_flow]
 
-        #loop.run_until_complete(future)
-        print("FINISH deleting bandwdth->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        self.save_statistics(id_flow, data)
 
+        #loop.run_until_complete(asyncio.wait(task))
+        #print("FINISH deleting bandwidth->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+    # Trciky for that nasty event loop because get loop change the main
+    # python thread!!!!
+    def get_loop(self):
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError as e:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        finally:
+            return loop
+    
+    def save_statistics(self, id_flow, cache):
+        data = {"id_flow": id_flow, "batch": cache}
+        #print("Print Json {}".format(data))
+        res = requests.post(self.statistics_url + "/save_batch_statistics",
+                            json=data,
+                            headers={'Content-type': 'application/json'})
+        if not res.status_code == 200:
+            print("Statistics not saved, "
+                  "status code {}".format(res.status_code))
+        
     """
-    async def save_statistics(self, id_flow, cache):
+
+
+     async def save_statistics(self, id_flow, cache):
         url = self.statistics_url + "/save_statistics"
         async with ClientSession() as session:
             for length, time in cache:
                 data = {"id_flow": id_flow,
                         "size": length,
                         "time": time}
-                task = asyncio.ensure_future(self.fetch(url, session, data))
-
-    async def fetch(self, url, session, data):
-        async with session.post(url, json=data) as response:
-            return await response.read()
+                async with session.post(url, json=data) as response:
+                    return await response.read()
 
         data = {"id_flow": id_flow,
                 "size": length,

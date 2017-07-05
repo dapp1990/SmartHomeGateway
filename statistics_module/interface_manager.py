@@ -22,7 +22,20 @@ class InterfaceStatistics(object):
         pass
 
     @abc.abstractmethod
-    def get_statistics(self, table_id, max_stat, from_time_str, to_time_str):
+    def save_batch_statistics(self, statistics):
+        """Abstract method to be implemented by the concrete StatisticsManager class.
+
+        Args:
+            statistics ([str]): List of statistics from the datapath.
+                statistics[0] = ip_source
+                statistics[1] = ip_dst
+                statistics[2] = length of message
+                statistics[3] = arriving time
+        """
+        pass
+
+    @abc.abstractmethod
+    def get_statistics(self, statistics):
         """Abstract method to be implemented by the concrete StatisticsManager class.
 
         Args:

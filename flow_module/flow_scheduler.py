@@ -34,7 +34,7 @@ class FlowScheduler(app_manager.RyuApp):
     def add_flow(self, msg_len, datapath, out_format):
         if self.queue.qsize() > self.max_size and not self.waiting_response:
             now_str = str(datetime.now())
-            print("sending burst of {}".format(self.id_flow))
+            #print("sending burst of {}".format(self.id_flow))
             self.waiting_response = True
             self.monitor.notification(self.monitor.bottleneck_notification,
                                       [self.id_flow, now_str])
