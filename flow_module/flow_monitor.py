@@ -161,9 +161,10 @@ class FlowMonitor:
         # thread!
         # uvloop
         #print("Deleting bandwidth - >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        #data = self.cache[id_flow][2]
-        now_str = str(datetime.now())
-        data = [[156, now_str], [156, now_str], [156, now_str], [156, now_str], [156, now_str] , [156, now_str], [156, now_str]]
+        data = self.cache[id_flow][2]
+        #now_str = str(datetime.now())
+        #data = [[156, now_str], [156, now_str], [156, now_str], [156,
+        # now_str], [156, now_str] , [156, now_str], [156, now_str]]
         """
         try:
             loop = asyncio.get_event_loop()
