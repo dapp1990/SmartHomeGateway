@@ -1,6 +1,8 @@
 from unittest import TestCase
-from policy_module.simple_policy_manager import SimplePolicyManager
+
 import numpy as np
+
+from backup.simple_policy_manager import SimplePolicyManager
 
 
 class TestSimplePolicyManager(TestCase):

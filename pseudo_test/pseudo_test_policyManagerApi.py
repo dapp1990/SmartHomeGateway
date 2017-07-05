@@ -1,5 +1,5 @@
-from statistics_module.simple_statistics_manager import SimpleStatisticsManager
-from statistics_module.statistics_manager_api import StatisticsApi
+from statistics_module.basic_engine import StatisticsEngine
+from statistics_module.webservice_api import StatisticsWebService
 from datetime import datetime, timedelta
 import requests
 import json

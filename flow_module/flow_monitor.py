@@ -27,14 +27,12 @@ class FlowMonitor:
         self.policy_url = "http://localhost:5002"
         self.statistics_url = "http://localhost:5001"
 
-        self.max_size = 10 # after several test 10 looks a good threashold
+        self.max_size = 10
 
         self.accept_update = True
         self.outgoing_flows = {}
         self.bandwidths = {}
         self.cache = {}
-        #self.loop = asyncio.get_event_loop()
-        #self.loop = asyncio.new_event_loop()
 
         self.local_port = 2  # 4294967294
 
@@ -46,7 +44,6 @@ class FlowMonitor:
             requests_thread.start()
 
     def notification(self, function, parameters):
-        #print("Receive a notification {}".format(function))
         if function ==  self.bottleneck_notification and not self.accept_update:
             return
         if function ==  self.bottleneck_notification:
@@ -63,47 +60,35 @@ class FlowMonitor:
 
     def outgoing_notification(self, id_flow, msg_len, datapath, in_port, msg,
                               parser,time):
-        #print("outgoing notification with {}".format(self.outgoing_flows))
         if id_flow not in self.outgoing_flows:
             result = self.get_bandwidth(id_flow)
             if isinstance(result, dict):
                 for flow in result:
                     self.set_bandwidth(flow, result[flow])
             else:
-            #print("Setting bandwidth to {}".format(bandwidth))
-            #bandwidth = 100000
                 self.set_bandwidth(id_flow, float(result))
             self.cache[id_flow] = [time, None, []]
-            #append
         self.cache[id_flow][1] = time
         self.cache[id_flow][2].append([msg_len,time])
 
         self.set_outgoing_scheduler(id_flow, msg_len, datapath, in_port, msg,
                                     parser)
-        #self.save_statistics(id_flow, msg_len, time)
 
     def bottleneck_notification(self, id_flow, request_time):
-        #if id_flow not in self.bandwidths:
-        #    return
-        #print("before self.get_updates {}".format(self.bandwidths))
         flow_dict = self.get_updates(id_flow, request_time)
-        #print("result of policy {}".format(flow_dict))
         for id_flow in flow_dict:
             if flow_dict[id_flow] <= 5:
                 self.del_bandwidth(id_flow)
             else:
                 self.set_bandwidth(id_flow, flow_dict[id_flow])
         self.accept_update = True
-        #print("after self.get_updates {}".format(self.bandwidths))
 
     def get_updates(self, id_flow, request_time):
-        # TODO[id:1]: maybe it is better to request the bandwidth of every flow
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths,
                 'cache': self.cache, 'time_request': request_time}
         res = requests.post(self.policy_url + "/update_bandwidths",
                             json=data,
                             headers={'Content-type': 'application/json'})
-        # TODO: what happen if response is not 2000
         if res.status_code == 200:
             return res.json()['response']
         else:
@@ -112,7 +97,6 @@ class FlowMonitor:
             return None
 
     def get_bandwidth(self, id_flow):
-        #print("getting bandwidth {}".format(id_flow))
         data = {'flow_id': id_flow, 'current_flows': self.bandwidths}
         res = requests.post(self.policy_url + "/get_bandwidth",
                             json=data,
@@ -121,9 +105,9 @@ class FlowMonitor:
             data = res.json() 
             return data['response']
         else:
-            print("Impossible to assing width, "
-                                "status code {}".format(res.status_code))
-            return -1
+            print("Impossible to assing width, status code {}".format(
+                res.status_code))
+            return 1660
 
     def set_outgoing_scheduler(self, id_flow, msg_len, datapath, in_port,
                                msg, parser):
@@ -143,8 +127,6 @@ class FlowMonitor:
 
         self.outgoing_flows[id_flow].add_flow(msg_len, datapath, out_format)
 
-    #TODO[id:1]: maybe it is better to request the bandwidth of every flow
-    # scheduler and not make this cache here
     def set_bandwidth(self,id_flow, bandwidth):
         self.bandwidths[id_flow] = bandwidth
         if id_flow in self.outgoing_flows:
@@ -156,83 +138,20 @@ class FlowMonitor:
                                                          self.max_size)
 
     def del_bandwidth(self,id_flow):
-        #Corrutines! I should use corrutines! to actually save it.
-        # remember corrutines are important because the execute in the main
-        # thread!
-        # uvloop
-        #print("Deleting bandwidth - >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         data = self.cache[id_flow][2]
-        #now_str = str(datetime.now())
-        #data = [[156, now_str], [156, now_str], [156, now_str], [156,
-        # now_str], [156, now_str] , [156, now_str], [156, now_str]]
-        """
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError as e:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        """
 
-        #task = loop.ensure_future(self.save_statistics(id_flow, data))
-        #future = asyncio.ensure_future(self.save_statistics(id_flow, data))
         del self.bandwidths[id_flow]
         del self.outgoing_flows[id_flow]
         del self.cache[id_flow]
 
         self.save_statistics(id_flow, data)
-
-        #loop.run_until_complete(asyncio.wait(task))
-        #print("FINISH deleting bandwidth->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-    # Trciky for that nasty event loop because get loop change the main
-    # python thread!!!!
-    def get_loop(self):
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError as e:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        finally:
-            return loop
     
     def save_statistics(self, id_flow, cache):
         data = {"id_flow": id_flow, "batch": cache}
-        #print("Print Json {}".format(data))
+
         res = requests.post(self.statistics_url + "/save_batch_statistics",
                             json=data,
                             headers={'Content-type': 'application/json'})
         if not res.status_code == 200:
             print("Statistics not saved, "
                   "status code {}".format(res.status_code))
-        
-    """
-
-
-     async def save_statistics(self, id_flow, cache):
-        url = self.statistics_url + "/save_statistics"
-        async with ClientSession() as session:
-            for length, time in cache:
-                data = {"id_flow": id_flow,
-                        "size": length,
-                        "time": time}
-                async with session.post(url, json=data) as response:
-                    return await response.read()
-
-        data = {"id_flow": id_flow,
-                "size": length,
-                "time": time}
-        url = self.statistics_url + "/save_statistics"
-        res = requests.post(url,
-                            json=data,
-                            headers={'Content-type': 'application/json'})
-
-
-
-        for length,time in temp:
-            data = {"id_flow": id_flow,
-                    "size": length,
-                    "time": time}
-            url = self.statistics_url + "/save_statistics"
-            res = requests.post(url,
-                                json=data,
-                                headers={'Content-type': 'application/json'})
-    """

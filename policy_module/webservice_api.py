@@ -1,14 +1,13 @@
-from policy_module.interface_policy_manager import InterfacePolicy
-from policy_module.simple_policy_manager import SimplePolicyManager
-from policy_module.medium_policy_manager import MediumPolicyManager
+import asyncio
+import logging as log
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timedelta
+
 from aiohttp import ClientSession
 from aiohttp import web
-import logging as log
-import asyncio
 
-#FIXME: modify when you are using SimpleManager
+from policy_module.base_policy import InterfacePolicy
+from policy_module.basic_engine import MediumPolicyManager
 
 
 class PolicyApi:
@@ -60,7 +59,6 @@ class PolicyApi:
         from_time = to_time - timedelta(seconds=self.time_lapse)
         log.info("This is the requester {} ".format(data['flow_id']))
 
-        #FIXME time request!!!!
         if not data['cache']:
             statistics = {}
             async with ClientSession() as session:

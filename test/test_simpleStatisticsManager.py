@@ -1,4 +1,4 @@
-from statistics_module.simple_statistics_manager import SimpleStatisticsManager
+from statistics_module.basic_engine import StatisticsEngine
 from unittest import TestCase
 from datetime import datetime, timedelta
 import os
@@ -8,7 +8,7 @@ import time
 class TestSimpleStatisticsManager(TestCase):
 
     def setUp(self):
-        self.simple_manager = SimpleStatisticsManager('test_database.json')
+        self.simple_manager = StatisticsEngine('test_database.json')
 
     def test_get_nothing(self):
         to_time = datetime.now()

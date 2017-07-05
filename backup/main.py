@@ -3,8 +3,8 @@ from mininet.node import RemoteController
 from mnt.topology import gatewayNet
 from mininet.log import setLogLevel, info
 
-from statistics_module.simple_statistics_manager import SimpleStatisticsManager
+from statistics_module.basic_engine import StatisticsEngine
 
-test = SimpleStatisticsManager()
+test = StatisticsEngine()
 
 test.save_statistics("frvfrv")

@@ -1,10 +1,6 @@
-from .interface_policy_manager import InterfacePolicy
+from policy_module.base_policy import InterfacePolicy
 import logging as log
 from datetime import datetime
-
-
-# FIXME: watch out for the maxima capacity! you never ever assigned more
-# capacity than available
 
 
 class SimplePolicyManager(InterfacePolicy):
@@ -16,8 +12,7 @@ class SimplePolicyManager(InterfacePolicy):
     """
 
     def __init__(self, max_capacity, reserved_bytes, level=log.INFO):
-        log.basicConfig(#filename='SimplePolicyManager.log',
-                        format='%(''asctime)s - %(levelname)s - %(message)s',
+        log.basicConfig(format='%(''asctime)s - %(levelname)s - %(message)s',
                         filemode='w',
                         level=level)
         log.info("initializing SimplePolicyManager class")
@@ -41,14 +36,12 @@ class SimplePolicyManager(InterfacePolicy):
 
         return self.reserved_bytes
 
-    # Todo: add hard constrains (max and min bandwidth rate)
     def update_bandwidth(self, flow_id, flow_current_bandwidth,
                          flow_statistics, time_str):
         """Update the bandwidths of the given flows.
 
-        NOTE: Actually the constrain new_bandwidth < self.reserved_bytes then 0
-        is too restrictive. You must fin a better thread off with this
-        approach!
+        NOTE: Be careful, the constrain new_bandwidth < self.reserved_bytes
+        then 0 is too restrictive.
 
         Look over all the given flows and their statistics. Find inactive
         flows. Assign a bandwidth of zero to inactive flows and reduce the
@@ -86,15 +79,13 @@ class SimplePolicyManager(InterfacePolicy):
 
             delta_time = request_time - final
             total_delta = final - initial
-            # TODO: must be a clever way to fix this
+
             if delta_time.total_seconds() < 5 and 0 < total_delta.total_seconds():
 
                 new_bandwidth = sum(flow_statistics[f_id][
                                         2]) / total_delta.total_seconds()
             else:
                 new_bandwidth = 0
-
-            # FIXME for sure we need anothe good method to assign bandwidth
 
             if new_bandwidth < flow_current_bandwidth[f_id]:
                 reassigned_flow_bandwidth[f_id] = new_bandwidth
@@ -103,7 +94,6 @@ class SimplePolicyManager(InterfacePolicy):
 
         current_capacity = sum(reassigned_flow_bandwidth.values())
 
-        # Todo: new a log to see if there is any warning here!
         available_bandwidth = self.max_capacity - current_capacity
         if available_bandwidth <= 0:
             log.warning("No more bandwidth available for %s", flow_id)

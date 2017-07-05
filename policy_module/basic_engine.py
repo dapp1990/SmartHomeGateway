@@ -1,4 +1,4 @@
-from .interface_policy_manager import InterfacePolicy
+from .base_policy import InterfacePolicy
 import logging as log
 from datetime import datetime
 
@@ -6,16 +6,24 @@ from datetime import datetime
 
 
 class MediumPolicyManager(InterfacePolicy):
-    """Naive statistics manager to store and retrieve OVS statistics
+    """Basic implementation of a Policy engine.
 
-    This class reserve (MTU * 10) bytes from the max_capacity given to assign
-    to every new flow.
+    This class implements a statistics engine. This particular engine
+    reserve a given number of bytes to be assigned to new flow in the
+    network. This engine is constrained by the maximum capacity of the
+    network and ensure that the resources are maximized depending on the
+    given statistics.
 
+    Args:
+        max_capacity (int): Maximum capacity of the netwrok in terms of bytes
+        per second.
+        reserved_bytes (int): Reserved bytes which will be assigned as a
+        first attempt to a new flow.
+        level (int, optional): Level of the logger.
     """
 
     def __init__(self, max_capacity, reserved_bytes, level=log.INFO):
-        log.basicConfig(#filename='SimplePolicyManager.log',
-                        format='%(''asctime)s - %(levelname)s - %(message)s',
+        log.basicConfig(format='%(''asctime)s - %(levelname)s - %(message)s',
                         filemode='w',
                         level=level)
         log.info("initializing MediumPolicyManager class")
@@ -24,12 +32,24 @@ class MediumPolicyManager(InterfacePolicy):
         self.reserved_bytes = reserved_bytes
 
     def get_bandwidth(self, flow_id, current_flows):
-        """ Simple algorithm which assign the minimum amount of bandwidth.
+        """Function that assigned a rate to a given flow id.
+
+        This function verifies that there is still capacity for the given
+        flow and assigns the reserved bytes. In case there is no enough
+        space, the function marginalize the bandwidth of the current flows
+        and assings a new rate given its percentage in order to allow a
+        window of the reserved bytes to be assign to the new flow.
 
         Args:
-            flow_id (str): id of the flow to monitor
-        """
+            flow_id (str): the id of the new flow.
+            current_flows ({str,int}): A dictionary where the keys are the
+            ids of all the current flows and the values the rate assigned to
+            them.
 
+        Returns:
+            dict or int: Either return a dictionary with new rates to all the
+            current flows or a single value for the given flow id.
+        """
         current_capacity = sum(current_flows.values())
 
         if self.max_capacity+self.reserved_bytes <= current_capacity:
@@ -45,35 +65,30 @@ class MediumPolicyManager(InterfacePolicy):
 
     def update_bandwidth(self, flow_id, flow_current_bandwidth,
                          flow_statistics, time_str):
-        """Update the bandwidths of the given flows.
+        """Function that reclculate the rates of the given current flows.
 
-        NOTE: Actually the constrain new_bandwidth < self.reserved_bytes then 0
-        is too restrictive. You must fin a better thread off with this
-        approach!
-
-        Look over all the given flows and their statistics. Find inactive
-        flows. Assign a bandwidth of zero to inactive flows and reduce the
-        capacity of the flows if its current bandwidth is greater than the
-        actual bandwidth, given by statistics.
-
-        Inactive flow is a flow that, according with the statistics,
-        has a bandwidth smaller than the *RESERVED_BYTES*.
-
-        Recalculate current capacity and assigns the smallest value given by
-        double bandwidth of the given flow, the available bandwidth of the
-        network or the maximum bandwidth rate assigned (in case of hard
-        constraint).
-
-        If the available capacity is zero, the bandwidth of the given flow_id
-        is not changed.
+        This function uses the statistics to get an average of the actual flow
+        per second of each current flow. Then marginalize the final result to
+        obtain percentage and the new rate is calculate multiplying the
+        maximum capacity without the reserved bytes and its percentage. This
+        allow to never assign more bandwidth which can be handler according
+        with the given maximum capacity.
 
         Args:
-            flow_current_bandwidth: bandwidth of the current flows WITH
-            flow_id.
-            flow_statistics ([(str,[int])]): Statistics of the last active.
-            flow_id (int): The flow id which bandwidth request to be changed.
-        """
+            flow_id (str): the id of the new flow.
+            flow_current_bandwidth ({str,int}): A dictionary where the keys are
+            the ids of all the current flows and the values the rate assigned to
+            them.
+            flow_statistics ({str,[str,str]}): A dictionary where the keys are
+            the ids of all the current flows and the values are a list of two
+            elements containg the size and the time in which a packets was
+            captured.
+            time_str (str): time in which the request was made.
 
+        Returns:
+            dict or int: Either return a dictionary with new rates to all the
+            current flows or a single value for the given flow id.
+        """
         reassigned_flow_bandwidth = {}
         temp_current = flow_current_bandwidth
         temp = {}
@@ -89,7 +104,7 @@ class MediumPolicyManager(InterfacePolicy):
 
             delta_time = request_time - final
             total_delta = final - initial
-            # TODO: must be a clever way to fix this
+
             if delta_time.total_seconds() < 5:
                 if 0 == total_delta.total_seconds():
                      new_bandwidth = flow_statistics[f_id][2][0][0]
