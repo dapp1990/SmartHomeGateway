@@ -26,7 +26,8 @@ class StatisticsWebService:
     Args:
         statistics_engine (str): Instance of a concrete statistics engine.
         level (int, optional): Level of the logger.
-     Attributes:
+
+    Attributes:
         app (Application): A instance of the aiohttp web Application
     """
     def __init__(self, statistics_engine, level=log.INFO):

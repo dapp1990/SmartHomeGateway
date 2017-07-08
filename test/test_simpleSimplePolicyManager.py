@@ -2,14 +2,14 @@ from unittest import TestCase
 
 import numpy as np
 
-from backup.simple_policy_manager import SimplePolicyManager
+from backup.simple_policy_manager import SimplePolicyEngineManager
 
 
 class TestSimplePolicyManager(TestCase):
 
     def test_simple_zero_update_bandwidth(self):
         reserved_bytes = (150 + 16) * 10
-        simple_policy_manager = SimplePolicyManager(200000,reserved_bytes)
+        simple_policy_manager = SimplePolicyEngineManager(200000, reserved_bytes)
         flow_statistics = {}
         flow_bandwidths = {}
 
@@ -33,7 +33,7 @@ class TestSimplePolicyManager(TestCase):
 
     def test_set_bandwidth_more_capacity_low_statistics(self):
         reserved_bytes = (150 + 16) * 10
-        simple_policy_manager = SimplePolicyManager(300000, reserved_bytes)
+        simple_policy_manager = SimplePolicyEngineManager(300000, reserved_bytes)
         flow_statistics = {}
         flow_bandwidths = {}
 
@@ -64,7 +64,7 @@ class TestSimplePolicyManager(TestCase):
 
     def test_set_bandwidth_more_capacity_high_statistics(self):
         reserved_bytes = (150 + 16) * 10
-        simple_policy_manager = SimplePolicyManager(300000, reserved_bytes)
+        simple_policy_manager = SimplePolicyEngineManager(300000, reserved_bytes)
         flow_statistics = {}
         flow_bandwidths = {}
 
@@ -96,7 +96,7 @@ class TestSimplePolicyManager(TestCase):
 
     def test_set_bandwidth_set_free_capacity(self):
         reserved_bytes = (150 + 16) * 10
-        simple_policy_manager = SimplePolicyManager(18000,reserved_bytes)
+        simple_policy_manager = SimplePolicyEngineManager(18000, reserved_bytes)
         flow_statistics = {}
         flow_bandwidths = {}
 

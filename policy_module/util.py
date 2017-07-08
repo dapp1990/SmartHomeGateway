@@ -14,7 +14,8 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
         the order of the polynomial used in the filtering.
         Must be less then `window_size` - 1.
     deriv: int
-        the order of the derivative to compute (default = 0 means only smoothing)
+        the order of the derivative to compute (default = 0 means only
+        smoothing)
     Returns
     -------
     ys : ndarray, shape (N)

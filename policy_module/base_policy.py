@@ -1,7 +1,7 @@
 import abc
 
 
-class InterfacePolicy(object):
+class BasePolicyEngine(object):
     """Interface to create Policy Engines
     """
     __metaclass__ = abc.ABCMeta

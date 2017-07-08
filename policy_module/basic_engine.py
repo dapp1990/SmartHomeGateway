@@ -1,11 +1,11 @@
-from .base_policy import InterfacePolicy
+from .base_policy import BasePolicyEngine
 import logging as log
 from datetime import datetime
 
 # TODO: Make unittest
 
 
-class MediumPolicyManager(InterfacePolicy):
+class PolicyEngine(BasePolicyEngine):
     """Basic implementation of a Policy engine.
 
     This class implements a statistics engine. This particular engine
@@ -32,12 +32,12 @@ class MediumPolicyManager(InterfacePolicy):
         self.reserved_bytes = reserved_bytes
 
     def get_bandwidth(self, flow_id, current_flows):
-        """Function that assigned a rate to a given flow id.
+        """Function that assigns a rate to a given flow id.
 
         This function verifies that there is still capacity for the given
         flow and assigns the reserved bytes. In case there is no enough
         space, the function marginalize the bandwidth of the current flows
-        and assings a new rate given its percentage in order to allow a
+        and assigns a new rate given its percentage in order to allow a
         window of the reserved bytes to be assign to the new flow.
 
         Args:

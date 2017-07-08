@@ -1,9 +1,9 @@
-from policy_module.base_policy import InterfacePolicy
+from policy_module.base_policy import BasePolicyEngine
 import logging as log
 from datetime import datetime
 
 
-class SimplePolicyManager(InterfacePolicy):
+class SimplePolicyEngineManager(BasePolicyEngine):
     """Naive statistics manager to store and retrieve OVS statistics
 
     This class reserve (MTU * 10) bytes from the max_capacity given to assign
